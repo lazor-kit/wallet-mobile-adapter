@@ -1,0 +1,41 @@
+{
+  "name": "@lazorkit/wallet-mobile-adapter",
+  "version": "1.0.0",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
+  },
+  "keywords": [
+    "lazorkit",
+    "wallet",
+    "mobile",
+    "adapter",
+    "sdk"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@types/bs58": "^4.0.4",
+    "@types/react": "^19.1.6",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.2.0",
+    "rollup": "^4.41.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "js-sha256": "^0.11.1",
+    "react": "^19.1.0",
+    "react-native": "^0.79.2",
+    "react-native-get-random-values": "^1.11.0",
+    "zustand": "^5.0.5"
+  }
+}

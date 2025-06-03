@@ -5,18 +5,31 @@ export default {
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/my-sdk.umd.js',
-      format: 'umd',
-      name: 'MySDK',
-    },
-    {
-      file: 'dist/my-sdk.module.js',
-      format: 'es',
-    },
-    {
-      file: 'dist/my-sdk.common.js',
+      file: 'dist/index.js',
       format: 'cjs',
+      sourcemap: true
     },
+    {
+      file: 'dist/index.esm.js',
+      format: 'es',
+      sourcemap: true
+    }
   ],
-  plugins: [json(), typescript()],
+  external: [
+    'react',
+    'react-native',
+    '@coral-xyz/anchor',
+    '@react-native-async-storage/async-storage',
+    'expo-web-browser',
+    'js-sha256',
+    'react-native-get-random-values',
+    'zustand'
+  ],
+  plugins: [
+    json(),
+    typescript({
+      tsconfig: './tsconfig.json',
+      useTsconfigDeclarationDir: true
+    })
+  ]
 };

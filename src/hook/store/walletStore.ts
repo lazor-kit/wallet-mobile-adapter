@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from '../constants';
 import { SignResult, WalletInfo } from '../types';
 import { logger } from '../utils/logger';
 import { Linking, Platform } from 'react-native';
-import * as WebBrowser from '../../web-browser/WebBrowser';
+import * as WebBrowser from 'expo-web-browser';
 import { createWalletActions } from './walletAction';
 
 const handleRedirect = (url: string): WalletInfo | null => {

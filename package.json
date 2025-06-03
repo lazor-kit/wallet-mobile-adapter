@@ -1,6 +1,7 @@
 {
   "name": "@lazorkit/wallet-mobile-adapter",
   "version": "1.0.0",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -32,6 +33,8 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@react-native-async-storage/async-storage": "^2.1.2",
+    "buffer": "^6.0.3",
+    "expo-web-browser": "^14.1.6",
     "js-sha256": "^0.11.1",
     "react": "^19.1.0",
     "react-native": "^0.79.2",

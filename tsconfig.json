@@ -3,6 +3,8 @@
     "target": "es6",
     "module": "esnext",
     "declaration": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": true,
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,

@@ -1,3 +1,5 @@
+import { Buffer } from "buffer";
+
 // LAZOR.KIT PROGRAM
 export const SMART_WALLET_SEQ_SEED = Buffer.from("smart_wallet_seq");
 export const SMART_WALLET_SEED = Buffer.from("smart_wallet");

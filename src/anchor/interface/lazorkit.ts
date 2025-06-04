@@ -15,6 +15,7 @@ import { DefaultRuleProgram } from './default_rule';
 if (typeof globalThis.structuredClone !== 'function') {
   globalThis.structuredClone = (obj: any) => JSON.parse(JSON.stringify(obj));
 }
+import { Buffer } from "buffer";
 
 export class LazorKitProgram {
   readonly connection: anchor.web3.Connection;

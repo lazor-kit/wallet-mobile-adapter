@@ -1,4 +1,3 @@
-
 /**
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
@@ -6,177 +5,130 @@
  * IDL can be found at `target/idl/default_rule.json`.
  */
 export type DefaultRule = {
-  "address": "B98ooLRYBP6m6Zsrd3Hnzn4UAejfVZwyDgMFaBNzVR2W",
-  "metadata": {
-    "name": "defaultRule",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "description": "Created with Anchor"
-  },
-  "instructions": [
+  address: 'B98ooLRYBP6m6Zsrd3Hnzn4UAejfVZwyDgMFaBNzVR2W';
+  metadata: {
+    name: 'defaultRule';
+    version: '0.1.0';
+    spec: '0.1.0';
+    description: 'Created with Anchor';
+  };
+  instructions: [
     {
-      "name": "checkRule",
-      "discriminator": [
-        215,
-        90,
-        220,
-        175,
-        191,
-        212,
-        144,
-        147
-      ],
-      "accounts": [
+      name: 'checkRule';
+      discriminator: [215, 90, 220, 175, 191, 212, 144, 147];
+      accounts: [
         {
-          "name": "smartWalletAuthenticator",
-          "signer": true
+          name: 'smartWalletAuthenticator';
+          signer: true;
         },
         {
-          "name": "rule",
-          "writable": true
+          name: 'rule';
+          writable: true;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "destroy",
-      "discriminator": [
-        157,
-        40,
-        96,
-        3,
-        135,
-        203,
-        143,
-        74
-      ],
-      "accounts": [
+      name: 'destroy';
+      discriminator: [157, 40, 96, 3, 135, 203, 143, 74];
+      accounts: [
         {
-          "name": "smartWallet",
-          "docs": [
-            "CHECK"
-          ]
+          name: 'smartWallet';
+          docs: ['CHECK'];
         },
         {
-          "name": "smartWalletAuthenticator",
-          "docs": [
-            "CHECK"
-          ],
-          "signer": true
+          name: 'smartWalletAuthenticator';
+          docs: ['CHECK'];
+          signer: true;
         },
         {
-          "name": "rule",
-          "writable": true
+          name: 'rule';
+          writable: true;
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "initRule",
-      "discriminator": [
-        129,
-        224,
-        96,
-        169,
-        247,
-        125,
-        74,
-        118
-      ],
-      "accounts": [
+      name: 'initRule';
+      discriminator: [129, 224, 96, 169, 247, 125, 74, 118];
+      accounts: [
         {
-          "name": "payer",
-          "writable": true,
-          "signer": true
+          name: 'payer';
+          writable: true;
+          signer: true;
         },
         {
-          "name": "smartWallet"
+          name: 'smartWallet';
         },
         {
-          "name": "smartWalletAuthenticator",
-          "docs": [
-            "CHECK"
-          ],
-          "signer": true
+          name: 'smartWalletAuthenticator';
+          docs: ['CHECK'];
+          signer: true;
         },
         {
-          "name": "rule",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: 'rule';
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  114,
-                  117,
-                  108,
-                  101
-                ]
+                kind: 'const';
+                value: [114, 117, 108, 101];
               },
               {
-                "kind": "account",
-                "path": "smartWallet"
+                kind: 'account';
+                path: 'smartWallet';
               }
-            ]
-          }
+            ];
+          };
         },
         {
-          "name": "lazorkit",
-          "address": "3CFG1eVGpUVAxMeuFnNw7CbBA1GQ746eQDdMWPoFTAD8"
+          name: 'lazorkit';
+          address: '3CFG1eVGpUVAxMeuFnNw7CbBA1GQ746eQDdMWPoFTAD8';
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          name: 'systemProgram';
+          address: '11111111111111111111111111111111';
         }
-      ],
-      "args": []
+      ];
+      args: [];
     }
-  ],
-  "accounts": [
+  ];
+  accounts: [
     {
-      "name": "rule",
-      "discriminator": [
-        82,
-        10,
-        53,
-        40,
-        250,
-        61,
-        143,
-        130
-      ]
+      name: 'rule';
+      discriminator: [82, 10, 53, 40, 250, 61, 143, 130];
     }
-  ],
-  "errors": [
+  ];
+  errors: [
     {
-      "code": 6000,
-      "name": "invalidPasskey"
+      code: 6000;
+      name: 'invalidPasskey';
     },
     {
-      "code": 6001,
-      "name": "unAuthorize"
+      code: 6001;
+      name: 'unAuthorize';
     }
-  ],
-  "types": [
+  ];
+  types: [
     {
-      "name": "rule",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'rule';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "smartWallet",
-            "type": "pubkey"
+            name: 'smartWallet';
+            type: 'pubkey';
           },
           {
-            "name": "admin",
-            "type": "pubkey"
+            name: 'admin';
+            type: 'pubkey';
           },
           {
-            "name": "isInitialized",
-            "type": "bool"
+            name: 'isInitialized';
+            type: 'bool';
           }
-        ]
-      }
+        ];
+      };
     }
-  ]
+  ];
 };

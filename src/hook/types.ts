@@ -1,30 +1,5 @@
 import * as anchor from '@coral-xyz/anchor';
-import { Buffer } from 'buffer';
 
-// Hook Types
-export type UseLazorWalletOptions = {
-  onConnectSuccess?: (wallet: WalletInfo) => void;
-  onConnectError?: (error: Error) => void;
-  onDisconnectSuccess?: () => void;
-  onDisconnectError?: (error: Error) => void;
-  onSignSuccess?: (result: SignResult) => void;
-  onSignError?: (error: Error) => void;
-};
-
-export type LazorWalletHook = {
-  pubkey: anchor.web3.PublicKey | null;
-  isConnected: boolean;
-  isLoading: boolean;
-  isConnecting: boolean;
-  isSigning: boolean;
-  error: Error | null;
-  connect: (options?: ConnectOptions) => Promise<void>;
-  disconnect: (options?: {
-    onSuccess?: () => void;
-    onError?: (error: Error) => void;
-  }) => Promise<void>;
-  signMessage: (message: string, options?: SignOptions) => Promise<void>;
-};
 /**
  * Minimal WalletInfo: what we persist to AsyncStorage and derive pubkey from.
  */
@@ -38,20 +13,97 @@ export type WalletInfo = {
 };
 
 /**
- * The shape of a SignResult: signature + original message + txHash (optional).
+ * Configuration for the wallet
  */
-export type SignResult = {
-  signature: Buffer; // raw bytes
-  msg: Buffer; // raw message bytes
-  txHash?: string; // optional transaction hash, if applicable
+export type WalletConfig = {
+  ipfsUrl: string;
+  paymasterUrl: string;
 };
 
+/**
+ * Options for connecting to a wallet
+ */
 export type ConnectOptions = {
+  redirectUrl: string;
   onSuccess?: (wallet: WalletInfo) => void;
   onFail?: (error: Error) => void;
 };
 
-export type SignOptions = {
-  onSuccess?: (result: SignResult) => void;
+/**
+ * Options for disconnecting from a wallet
+ */
+export type DisconnectOptions = {
+  onSuccess?: () => void;
   onFail?: (error: Error) => void;
+};
+
+/**
+ * Options for signing with a wallet
+ */
+export type SignOptions = {
+  redirectUrl: string;
+  onSuccess?: (signature: string) => void;
+  onFail?: (error: Error) => void;
+};
+
+/**
+ * Browser result data from passkey authentication
+ */
+export type BrowserResult = {
+  signature: string;
+  clientDataJsonBase64: string;
+  authenticatorDataBase64: string;
+};
+
+/**
+ * The state of the wallet store
+ */
+export type WalletState = {
+  // Config
+  config: WalletConfig;
+
+  // State
+  wallet: WalletInfo | null;
+  isLoading: boolean;
+  isConnecting: boolean;
+  isSigning: boolean;
+  connection: anchor.web3.Connection;
+  error: Error | null;
+
+  // Actions
+  setConfig: (config: WalletConfig) => void;
+  setWallet: (wallet: WalletInfo | null) => void;
+  setLoading: (isLoading: boolean) => void;
+  setConnecting: (isConnecting: boolean) => void;
+  setSigning: (isSigning: boolean) => void;
+  setConnection: (connection: anchor.web3.Connection) => void;
+  setError: (error: Error | null) => void;
+  clearError: () => void;
+
+  // Complex actions
+  connect: (options: ConnectOptions) => Promise<WalletInfo>;
+  disconnect: () => Promise<void>;
+  signMessage: (
+    txnIns: anchor.web3.TransactionInstruction,
+    options: SignOptions
+  ) => Promise<void>;
+};
+
+/**
+ * Public API for the Lazor wallet hook
+ */
+export type LazorWalletHook = {
+  smartWalletPubkey: anchor.web3.PublicKey | null;
+  isConnected: boolean;
+  isLoading: boolean;
+  isConnecting: boolean;
+  isSigning: boolean;
+  error: Error | null;
+  connection: anchor.web3.Connection;
+  connect: (options: ConnectOptions) => Promise<WalletInfo>;
+  disconnect: (options?: DisconnectOptions) => Promise<void>;
+  signMessage: (
+    txnIns: anchor.web3.TransactionInstruction,
+    options: SignOptions
+  ) => Promise<string>;
 };

@@ -1,15 +1,17 @@
 // Core
 export { useLazorWallet } from './hook/useLazorWallet';
-export { LazorWalletProvider } from './provider';
+export { LazorKitWalletProvider } from './provider';
 
 // Types
 export type {
   ConnectOptions,
+  DisconnectOptions,
   LazorWalletHook,
   SignOptions,
-  SignResult,
-  UseLazorWalletOptions,
   WalletInfo,
+  WalletConfig,
+  BrowserResult,
 } from './hook/types';
 
-export { DEFAULT_COMMITMENT, DEFAULT_RPC_ENDPOINT } from './constants';
+// Constants
+export { DEFAULT_COMMITMENT, DEFAULT_RPC_ENDPOINT, DEFAULTS } from './constants';

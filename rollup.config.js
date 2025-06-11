@@ -3,6 +3,7 @@ const json = require('@rollup/plugin-json');
 const resolve = require('@rollup/plugin-node-resolve');
 const dts = require('rollup-plugin-dts');
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+import commonjs from '@rollup/plugin-commonjs';
 
 // Main build
 const mainConfig = {
@@ -31,6 +32,20 @@ const mainConfig = {
     'zustand/middleware',
     'buffer',
     'bs58',
+    'node-fetch',
+    'whatwg-url',
+    '@solana/web3.js',
+    '@solana/buffer-layout',
+    '@solana/codecs-numbers',
+    'borsh',
+    'rpc-websockets',
+    '@noble/hashes/sha256',
+    'util',
+    'http',
+    'https',
+    'zlib',
+    'stream',
+    'url',
   ],
   plugins: [
     peerDepsExternal({
@@ -42,6 +57,10 @@ const mainConfig = {
       preferBuiltins: false,
     }),
     json(),
+    commonjs({
+      include: 'node_modules/',
+      requireReturnsDefault: 'auto',
+    }),
     typescript({
       tsconfig: './tsconfig.json',
       useTsconfigDeclarationDir: false, // Let the plugin handle it directly

@@ -4,18 +4,14 @@ import * as constants from '../constants';
 import IDL from '../idl/lazorkit.json';
 import { Lazorkit } from '../types/lazorkit';
 import * as types from '../types';
-import {
-  createSecp256r1Instruction,
-  getBlockhash,
-  hashSeeds,
-  signAndSendTxn,
-} from '../utils';
+import { createSecp256r1Instruction, hashSeeds } from '../utils';
 import { DefaultRuleProgram } from './default_rule';
 // Polyfill for structuredClone if not available (for React Native/Expo)
 if (typeof globalThis.structuredClone !== 'function') {
   globalThis.structuredClone = (obj: any) => JSON.parse(JSON.stringify(obj));
 }
-import { Buffer } from "buffer";
+import { Buffer } from 'buffer';
+import { sha256 } from 'js-sha256';
 
 export class LazorKitProgram {
   readonly connection: anchor.web3.Connection;
@@ -149,24 +145,6 @@ export class LazorKitProgram {
     const configData = await this.program.account.config.fetch(this.config);
     const smartWallet = await this.getLastestSmartWallet();
 
-    const depositSolIns = anchor.web3.SystemProgram.transfer({
-      fromPubkey: payer,
-      toPubkey: smartWallet,
-      lamports: 10000000,
-    });
-    const transactiondesposit = new anchor.web3.Transaction().add(
-      depositSolIns
-    );
-    const blockhash = await getBlockhash();
-    transactiondesposit.recentBlockhash = blockhash;
-    transactiondesposit.feePayer = payer;
-    const result = await signAndSendTxn({
-      base64EncodedTransaction: transactiondesposit
-        .serialize({ verifySignatures: false, requireAllSignatures: false })
-        .toString('base64'),
-      relayerUrl: 'https://lazorkit-paymaster.onrender.com',
-    });
-
     const [smartWalletAuthenticator] = this.smartWalletAuthenticator(
       passkeyPubkey,
       smartWallet
@@ -209,26 +187,34 @@ export class LazorKitProgram {
 
   async executeInstructionTxn(
     passkeyPubkey: number[],
-    message: Buffer,
+    clientDataJsonRaw: Buffer,
+    authenticatorDataRaw: Buffer,
     signature: Buffer,
-    ruleIns: anchor.web3.TransactionInstruction,
-    cpiIns: anchor.web3.TransactionInstruction | null = null,
     payer: anchor.web3.PublicKey,
     smartWallet: anchor.web3.PublicKey,
+    ruleIns: anchor.web3.TransactionInstruction | null,
+    cpiIns: anchor.web3.TransactionInstruction | null,
     executeAction: anchor.IdlTypes<Lazorkit>['action'] = types.ExecuteAction
       .ExecuteCpi,
     createNewAuthenticator: number[] | null = null,
-    verifyInstructionIndex: number = 0
+    verifyInstructionIndex: number = 1
   ): Promise<anchor.web3.Transaction> {
     const [smartWalletAuthenticator] = this.smartWalletAuthenticator(
       passkeyPubkey,
       smartWallet
     );
 
+    const ruleInstruction =
+      ruleIns ||
+      (await this.defaultRuleProgram.checkRuleIns(
+        smartWallet,
+        smartWalletAuthenticator
+      ));
+
     const ruleData: types.CpiData = {
-      data: ruleIns.data,
+      data: ruleInstruction.data,
       startIndex: 0,
-      length: ruleIns.keys.length,
+      length: ruleInstruction.keys.length,
     };
 
     let cpiData: types.CpiData | null = null;
@@ -254,11 +240,17 @@ export class LazorKitProgram {
     }
 
     remainingAccounts.push(
-      ...ruleIns.keys.map((key) => ({
+      ...ruleInstruction.keys.map((key) => ({
         pubkey: key.pubkey,
         isWritable: key.isWritable,
         isSigner: key.pubkey.equals(payer),
       }))
+    );
+
+    const clientDataJSONDigest = sha256.array(clientDataJsonRaw);
+
+    const message = Buffer.from(
+      new Uint8Array([...authenticatorDataRaw, ...clientDataJSONDigest])
     );
 
     const verifySignatureIx = createSecp256r1Instruction(
@@ -279,7 +271,8 @@ export class LazorKitProgram {
       .executeInstruction({
         passkeyPubkey,
         signature,
-        message,
+        clientDataJsonRaw,
+        authenticatorDataRaw,
         verifyInstructionIndex,
         ruleData: ruleData,
         cpiData: cpiData,
@@ -293,7 +286,7 @@ export class LazorKitProgram {
         smartWalletConfig: this.smartWalletConfig(smartWallet),
         smartWalletAuthenticator,
         whitelistRulePrograms: this.whitelistRulePrograms,
-        authenticatorProgram: ruleIns.programId,
+        authenticatorProgram: ruleInstruction.programId,
         ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         systemProgram: anchor.web3.SystemProgram.programId,
         cpiProgram: cpiIns ? cpiIns.programId : anchor.web3.PublicKey.default,
@@ -302,9 +295,20 @@ export class LazorKitProgram {
       .remainingAccounts(remainingAccounts)
       .instruction();
 
-    return new anchor.web3.Transaction()
+    const txn = new anchor.web3.Transaction()
+      .add(
+        anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
+          units: 300_000,
+        })
+      )
       .add(verifySignatureIx)
       .add(executeInstructionIx);
+
+    txn.feePayer = payer;
+    txn.recentBlockhash = (
+      await this.connection.getLatestBlockhash()
+    ).blockhash;
+    return txn;
   }
 
   async getSmartWalletByPasskey(passkeyPubkey: number[]): Promise<{

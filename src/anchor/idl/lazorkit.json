@@ -1,5 +1,5 @@
 {
-  "address": "3CFG1eVGpUVAxMeuFnNw7CbBA1GQ746eQDdMWPoFTAD8",
+  "address": "33tS3mSoyvdmKWxb6bgSL657AqH4Wxsu9R6GnvjtZdEd",
   "metadata": {
     "name": "lazorkit",
     "version": "0.1.0",
@@ -386,6 +386,41 @@
           "optional": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  101,
+                  110,
+                  116,
+                  105,
+                  99,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "smart_wallet"
+              },
               {
                 "kind": "arg",
                 "path": "args.create_new_authenticator.unwrap_or([0;\n33]).to_hashed_bytes(smart_wallet"
@@ -793,7 +828,11 @@
             "type": "bytes"
           },
           {
-            "name": "message",
+            "name": "client_data_json_raw",
+            "type": "bytes"
+          },
+          {
+            "name": "authenticator_data_raw",
             "type": "bytes"
           },
           {

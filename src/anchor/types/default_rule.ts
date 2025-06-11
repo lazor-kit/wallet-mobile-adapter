@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/default_rule.json`.
  */
 export type DefaultRule = {
-  address: 'B98ooLRYBP6m6Zsrd3Hnzn4UAejfVZwyDgMFaBNzVR2W';
+  address: 'scdFpnHi1Hu1BbKPwEdhRcdWwu5DohSWxCAg3UeDNKZ';
   metadata: {
     name: 'defaultRule';
     version: '0.1.0';
@@ -83,7 +83,7 @@ export type DefaultRule = {
         },
         {
           name: 'lazorkit';
-          address: '3CFG1eVGpUVAxMeuFnNw7CbBA1GQ746eQDdMWPoFTAD8';
+          address: '33tS3mSoyvdmKWxb6bgSL657AqH4Wxsu9R6GnvjtZdEd';
         },
         {
           name: 'systemProgram';

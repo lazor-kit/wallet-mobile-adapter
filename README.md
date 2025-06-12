@@ -1,23 +1,29 @@
 # 🚀 LazorKit - Mobile Wallet Adapter
 
 <div align="center">
-  <img src="https://img.shields.io/badge/platform-React%20Native-blue.svg" alt="React Native" />
-  <img src="https://img.shields.io/badge/network-Solana%20Devnet-purple.svg" alt="Solana Devnet" />
+  <img src="https://img.shields.io/badge/platform-React%20Native%20%7C%20iOS%20Only-blue.svg" alt="React Native | iOS Only" />
+  <img src="https://img.shields.io/badge/network-Solana%20Devnet%20Only-purple.svg" alt="Solana Devnet Only" />
   <img src="https://img.shields.io/badge/auth-Passkey-green.svg" alt="Passkey Auth" />
   <img src="https://img.shields.io/badge/license-ISC-yellow.svg" alt="ISC License" />
 </div>
 
 <br />
 
-> **Seamless Web3 authentication for mobile.** A React Native wallet adapter that leverages passkey authentication, smart wallets, and gasless transactions for the Solana ecosystem.
+> **Seamless Web3 authentication for React Native.** A React Native wallet adapter that leverages passkey authentication, smart wallets, and gasless transactions for the Solana Devnet ecosystem. Currently optimized for iOS with Android support coming soon.
+
+## ⚠️ Current Status
+
+> **Important**: This package is currently in beta and only supports:
+> - iOS devices (Android support coming soon)
+> - Solana Devnet (Mainnet support coming soon)
 
 ## ✨ Features
 
-🔐 **Passkey Authentication** - Secure, passwordless wallet creation using device biometrics  
+🔐 **Passkey Authentication** - Secure, passwordless wallet creation using iOS biometrics  
 💸 **Gasless Transactions** - Built-in paymaster support for frictionless UX  
-📱 **React Native First** - Designed specifically for mobile apps with Expo support  
+📱 **React Native** - Built with React Native, currently optimized for iOS  
 ⚡ **Smart Wallets** - Automatic smart wallet creation and management  
-🔗 **Solana Integration** - Full Anchor framework support with transaction signing  
+🔗 **Solana Devnet** - Full Anchor framework support with transaction signing  
 💾 **Persistent Storage** - Secure wallet state persistence with AsyncStorage  
 🛡️ **Type Safety** - Full TypeScript support with comprehensive type definitions  
 
@@ -385,14 +391,14 @@ const executeMultipleInstructions = async () => {
 
 ### Requirements
 - React Native 0.60+
+- iOS 16+ (for passkey support)
 - Expo SDK 48+ (for `expo-web-browser`)
-- iOS 16+ or Android 9+ (for passkey support)
 
 ### Current Limitations  
+- **iOS Only** - Android support coming soon
 - **Devnet Only** - Mainnet support coming soon
-- **Mobile Only** - Web browser support planned
 - **Single Instruction** - Multi-instruction transactions need custom implementation
-- **iOS Optimized** - Android support may vary
+- **iOS Optimized** - Currently only tested and optimized for iOS
 
 ---
 
@@ -437,8 +443,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ## 🆘 Support
 
-- 📖 **Documentation**: [docs.lazor.sh](https://docs.lazor.sh)
-- 🐦 **Twitter**: [@lazor_kit](https://twitter.com/lazorkit)
+- 🐦 **Twitter**: [@lazorkit](https://twitter.com/lazorkit)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/lazor-kit/wallet-mobile-adapter/issues)
 
 ---
@@ -453,7 +458,6 @@ ISC © [LazorKit](https://github.com/lazor-kit)
   <p>Made with ❤️ by the LazorKit team</p>
   <p>
     <a href="https://lazorkit.xyz">🌐 Website</a> •
-    <a href="https://docs.lazor.sh">📖 Docs</a> •
     <a href="https://twitter.com/lazorkit">🐦 Twitter</a>
   </p>
 </div>

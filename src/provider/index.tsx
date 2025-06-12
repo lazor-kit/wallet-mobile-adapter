@@ -1,13 +1,16 @@
 import * as anchor from '@coral-xyz/anchor';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useWalletStore } from '../hook/store/walletStore';
 import { logger } from '../hook/utils/logger';
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
 import { Text } from 'react-native';
+import { DEFAULTS } from '../constants';
 
-type LazorWalletProviderProps = {
-  connection: anchor.web3.Connection;
+type LazorKitWalletProviderProps = {
+  rpcUrl?: string;
+  ipfsUrl?: string;
+  paymasterUrl?: string;
   children: React.ReactNode;
 };
 
@@ -19,16 +22,21 @@ Buffer.prototype.subarray = function subarray(begin: number | undefined, end: nu
   return result;
 };
 
-export const LazorWalletProvider: React.FC<LazorWalletProviderProps> = ({
-  connection,
+export const LazorKitWalletProvider: React.FC<LazorKitWalletProviderProps> = ({
+  rpcUrl = DEFAULTS.RPC_ENDPOINT,
+  ipfsUrl = DEFAULTS.IPFS_URL,
+  paymasterUrl = DEFAULTS.PAYMASTER_URL,
   children,
 }) => {
-  const setConnection = useWalletStore((state) => state.setConnection);
+  const { setConnection, setConfig } = useWalletStore();
+
+  const connection = useMemo(() => new anchor.web3.Connection(rpcUrl, 'confirmed'), [rpcUrl]);
 
   useEffect(() => {
-    logger.info('Setting connection in wallet store');
+    logger.info('Setting connection and config in wallet store');
     setConnection(connection);
-  }, [connection, setConnection]);
+    setConfig({ ipfsUrl, paymasterUrl });
+  }, [connection, ipfsUrl, paymasterUrl, setConnection, setConfig]);
 
   return <>{typeof children === 'string' ? <Text>{children}</Text> : children}</>;
 };

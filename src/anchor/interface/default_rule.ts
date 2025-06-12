@@ -66,7 +66,6 @@ export class DefaultRuleProgram {
   }
 
   async destroyIns(
-    payer: anchor.web3.PublicKey,
     smartWallet: anchor.web3.PublicKey,
     smartWalletAuthenticator: anchor.web3.PublicKey
   ) {

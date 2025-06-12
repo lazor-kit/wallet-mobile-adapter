@@ -1,111 +1,90 @@
 import * as anchor from '@coral-xyz/anchor';
-import { useCallback } from 'react';
 import { useWalletStore } from './store/walletStore';
 import {
   ConnectOptions,
+  DisconnectOptions,
   LazorWalletHook,
   SignOptions,
-  SignResult,
-  UseLazorWalletOptions,
-  WalletInfo,
 } from './types';
-import { logger } from './utils/logger';
 
 /**
  * Hook that manages the LazorKit wallet flow
  */
-export function useLazorWallet(options?: UseLazorWalletOptions): LazorWalletHook {
+export function useLazorWallet(): LazorWalletHook {
   const {
     wallet,
     isLoading,
     isConnecting,
     isSigning,
     error,
-    connect: storeConnect,
-    disconnect: storeDisconnect,
-    signMessage: storeSignMessage,
+    connect,
+    disconnect,
+    connection,
+    signMessage,
   } = useWalletStore();
 
-  const connect = useCallback(
-    async (connectOptions?: ConnectOptions) => {
-      logger.log('Connecting wallet');
-      try {
-        logger.log('Trying to connect wallet');
-        await storeConnect({
-          onSuccess: (wallet: WalletInfo) => {
-            logger.log('Wallet connected successfully');
-            connectOptions?.onSuccess?.(wallet);
-            options?.onConnectSuccess?.(wallet);
-          },
-          onError: (error: Error) => {
-            logger.error('Failed to connect wallet', error);
-            connectOptions?.onFail?.(error);
-            options?.onConnectError?.(error);
-          },
-        });
-      } catch (error) {
-        logger.error('Unexpected error during wallet connection', error);
-        throw error;
-      }
-    },
-    [storeConnect, options]
-  );
+  const handleConnect = async (connectOptions: ConnectOptions) => {
+    try {
+      const result = await connect(connectOptions);
+      connectOptions?.onSuccess?.(result);
+      return result;
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      connectOptions?.onFail?.(err);
+      throw err;
+    }
+  };
 
-  const disconnect = useCallback(
-    async (disconnectOptions?: { onSuccess?: () => void; onError?: (error: Error) => void }) => {
-      try {
-        await storeDisconnect({
-          onSuccess: () => {
-            logger.log('Wallet disconnected successfully');
-            disconnectOptions?.onSuccess?.();
-            options?.onDisconnectSuccess?.();
-          },
-          onError: (error: Error) => {
-            logger.error('Failed to disconnect wallet', error);
-            disconnectOptions?.onError?.(error);
-            options?.onDisconnectError?.(error);
-          },
-        });
-      } catch (error) {
-        logger.error('Unexpected error during wallet disconnection', error);
-        throw error;
-      }
-    },
-    [storeDisconnect, options]
-  );
+  const handleDisconnect = async (disconnectOptions?: DisconnectOptions) => {
+    try {
+      await disconnect();
+      disconnectOptions?.onSuccess?.();
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      disconnectOptions?.onFail?.(err);
+      throw err;
+    }
+  };
 
-  const signMessage = useCallback(
-    async (message: string, signOptions?: SignOptions) => {
+  const handleSignMessage = (
+    txnIns: anchor.web3.TransactionInstruction,
+    signOptions: SignOptions
+  ): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
       try {
-        await storeSignMessage(message, {
-          onSuccess: (result: SignResult) => {
-            logger.log('Message signed successfully');
-            signOptions?.onSuccess?.(result);
-            options?.onSignSuccess?.(result);
+        signMessage(txnIns, {
+          redirectUrl: signOptions.redirectUrl,
+          onSuccess: (signature) => {
+            // Forward to consumer callback first
+            signOptions?.onSuccess?.(signature);
+            // Resolve promise with the actual result AFTER tx is sent
+            resolve(signature);
           },
-          onError: (error: Error) => {
-            logger.error('Failed to sign message', error);
+          onFail: (error) => {
             signOptions?.onFail?.(error);
-            options?.onSignError?.(error);
+            reject(error);
           },
         });
-      } catch (error) {
-        logger.error('Unexpected error during message signing', error);
-        throw error;
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        signOptions?.onFail?.(err);
+        reject(err);
       }
-    },
-    [storeSignMessage, options]
-  );
+    });
+  };
 
   return {
-    pubkey: wallet?.smartWallet ? new anchor.web3.PublicKey(wallet.smartWallet) : null,
+    smartWalletPubkey: wallet?.smartWallet
+      ? new anchor.web3.PublicKey(wallet.smartWallet)
+      : null,
     isConnected: !!wallet,
     isLoading,
     isConnecting,
     isSigning,
     error,
-    connect,
-    disconnect,
-    signMessage,
+    connection,
+    connect: handleConnect,
+    disconnect: handleDisconnect,
+    signMessage: handleSignMessage,
   };
 }

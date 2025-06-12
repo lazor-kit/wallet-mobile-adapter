@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 
-// LAZOR.KIT PROGRAM
+// lazorkit PROGRAM
 export const SMART_WALLET_SEQ_SEED = Buffer.from("smart_wallet_seq");
 export const SMART_WALLET_SEED = Buffer.from("smart_wallet");
 export const SMART_WALLET_CONFIG_SEED = Buffer.from("smart_wallet_config");

@@ -26,7 +26,9 @@ export const connectAction = async (
 
   try {
     const redirectUrl = options.redirectUrl;
-    const connectUrl = `${config.ipfsUrl}/${API_ENDPOINTS.CONNECT}&expo=lazorkit&redirect_url=${redirectUrl}`;
+    const connectUrl = `${config.ipfsUrl}/${
+      API_ENDPOINTS.CONNECT
+    }&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     const resultUrl = await openBrowser(connectUrl, redirectUrl);
     const walletInfo = handleAuthRedirect(resultUrl);
@@ -98,7 +100,7 @@ export const signMessageAction = async (
     const redirectUrl = options.redirectUrl;
     const signUrl = `${config.ipfsUrl}/${API_ENDPOINTS.SIGN}&message=${encodeURIComponent(
       hardcodeMessage.toString()
-    )}&expo=lazorkit&redirect_url=${encodeURIComponent(redirectUrl)}`;
+    )}t&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     await openSignBrowser(
       signUrl,

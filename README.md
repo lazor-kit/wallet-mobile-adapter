@@ -1,29 +1,29 @@
-# 🚀 lazorkit - Mobile Wallet Adapter
+# 🚀 LazorKit - Mobile Wallet Adapter
 
 <div align="center">
-  <img src="https://img.shields.io/badge/platform-iOS-blue.svg" alt="iOS" />
+  <img src="https://img.shields.io/badge/platform-React%20Native-blue.svg" alt="React Native" />
   <img src="https://img.shields.io/badge/network-Solana%20Devnet-purple.svg" alt="Solana Devnet" />
   <img src="https://img.shields.io/badge/auth-Passkey-green.svg" alt="Passkey Auth" />
-  <img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="MIT License" />
+  <img src="https://img.shields.io/badge/license-ISC-yellow.svg" alt="ISC License" />
 </div>
 
 <br />
 
-> **The future of mobile crypto is here.** Experience seamless, passwordless authentication with cutting-edge passkey technology, smart wallets, and gasless transactions - all in one React Native package.
+> **Seamless Web3 authentication for mobile.** A React Native wallet adapter that leverages passkey authentication, smart wallets, and gasless transactions for the Solana ecosystem.
 
-## ✨ What Makes This Special?
+## ✨ Features
 
-🔐 **Passwordless Authentication** - No more managing private keys! Use your device's biometric authentication  
-💸 **Gasless Transactions** - Built-in paymaster support for frictionless user experience  
-📱 **Native Mobile First** - Designed specifically for React Native with Expo support  
-⚡ **Smart Wallet Integration** - Automatic smart wallet creation and management  
-🔗 **Web3 Ready** - Full Solana integration with Anchor framework support  
+🔐 **Passkey Authentication** - Secure, passwordless wallet creation using device biometrics  
+💸 **Gasless Transactions** - Built-in paymaster support for frictionless UX  
+📱 **React Native First** - Designed specifically for mobile apps with Expo support  
+⚡ **Smart Wallets** - Automatic smart wallet creation and management  
+🔗 **Solana Integration** - Full Anchor framework support with transaction signing  
+💾 **Persistent Storage** - Secure wallet state persistence with AsyncStorage  
+🛡️ **Type Safety** - Full TypeScript support with comprehensive type definitions  
 
 ---
 
-## 🎯 Quick Start
-
-### Installation
+## 📦 Installation
 
 ```bash
 # Using npm
@@ -31,14 +31,15 @@ npm install @lazorkit/wallet-mobile-adapter
 
 # Using yarn
 yarn add @lazorkit/wallet-mobile-adapter
-
-# Peer dependencies
-yarn add expo-web-browser @coral-xyz/anchor
 ```
 
-### Basic Setup
+---
 
-**1. Wrap your app with the provider:**
+## 🚀 Quick Start
+
+### 1. Setup the Provider
+
+Wrap your app with `LazorKitWalletProvider`:
 
 ```tsx
 import React from 'react';
@@ -48,7 +49,7 @@ export default function App() {
   return (
     <LazorKitWalletProvider
       rpcUrl="https://api.devnet.solana.com"
-      ipfsUrl="https://portal.lazor.sh"
+      ipfsUrl="https://portal.lazor.sh"  
       paymasterUrl="https://lazorkit-paymaster.onrender.com"
     >
       <YourApp />
@@ -57,15 +58,15 @@ export default function App() {
 }
 ```
 
-**2. Connect and interact with the wallet:**
+### 2. Use the Wallet Hook
 
 ```tsx
 import React from 'react';
-import { View, Button, Text, StyleSheet } from 'react-native';
+import { View, Button, Text, Alert } from 'react-native';
 import { useLazorWallet } from '@lazorkit/wallet-mobile-adapter';
 import * as anchor from '@coral-xyz/anchor';
 
-export function WalletExample() {
+export function WalletDemo() {
   const {
     smartWalletPubkey,
     isConnected,
@@ -77,143 +78,87 @@ export function WalletExample() {
     signMessage,
   } = useLazorWallet();
 
-  const handleConnect = () => {
-    connect({
-      redirectUrl: 'exp://localhost:8081',
-      onSuccess: (wallet) => {
-        console.log('🎉 Wallet connected!', wallet.smartWallet);
-      },
-      onFail: (error) => {
-        console.error('❌ Connection failed:', error.message);
-      },
-    });
+  const handleConnect = async () => {
+    try {
+      await connect({
+        redirectUrl: 'exp://127.0.0.1:8081', // Your app's redirect URL
+        onSuccess: (wallet) => {
+          Alert.alert('Success', `Connected to ${wallet.smartWallet.slice(0, 8)}...`);
+        },
+        onFail: (error) => {
+          Alert.alert('Error', error.message);
+        },
+      });
+    } catch (error) {
+      console.error('Connection failed:', error);
+    }
   };
 
-  const handleSign = () => {
-    // Create a simple memo instruction
-    const memoInstruction = new anchor.web3.TransactionInstruction({
+  const handleSign = async () => {
+    if (!smartWalletPubkey) return;
+
+    // Create a memo instruction
+    const instruction = new anchor.web3.TransactionInstruction({
       keys: [],
       programId: new anchor.web3.PublicKey('Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo'),
-      data: Buffer.from('Hello from lazorkit! 🚀', 'utf-8'),
+      data: Buffer.from('Hello from LazorKit! 🚀', 'utf-8'),
     });
 
-    signMessage(memoInstruction, {
-      redirectUrl: 'exp://localhost:8081',
-      onSuccess: (signature) => {
-        console.log('✅ Transaction signed:', signature);
-      },
-      onFail: (error) => {
-        console.error('❌ Signing failed:', error.message);
-      },
-    });
+    try {
+      const signature = await signMessage(instruction, {
+        redirectUrl: 'exp://127.0.0.1:8081',
+        onSuccess: (sig) => {
+          Alert.alert('Success', `Transaction signed: ${sig.slice(0, 8)}...`);
+        },
+        onFail: (error) => {
+          Alert.alert('Error', error.message);
+        },
+      });
+      
+      console.log('Transaction signature:', signature);
+    } catch (error) {
+      console.error('Signing failed:', error);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>lazorkit Wallet Demo</Text>
+    <View style={{ padding: 20, gap: 20 }}>
+      <Text style={{ fontSize: 20, fontWeight: 'bold' }}>
+        LazorKit Wallet Demo
+      </Text>
       
       {!isConnected ? (
-        <View style={styles.connectSection}>
-          <Text style={styles.subtitle}>Connect your wallet to get started</Text>
+        <Button
+          title={isConnecting ? 'Connecting...' : 'Connect Wallet'}
+          onPress={handleConnect}
+          disabled={isConnecting}
+        />
+      ) : (
+        <View style={{ gap: 10 }}>
+          <Text>
+            Wallet: {smartWalletPubkey?.toBase58().slice(0, 8)}...
+          </Text>
           <Button
-            title={isConnecting ? '🔄 Connecting...' : '🔗 Connect Wallet'}
-            onPress={handleConnect}
-            disabled={isConnecting}
+            title={isSigning ? 'Signing...' : 'Sign Message'}
+            onPress={handleSign}
+            disabled={isSigning}
+          />
+          <Button
+            title="Disconnect"
+            onPress={() => disconnect()}
+            color="#ff6b6b"
           />
         </View>
-      ) : (
-        <View style={styles.walletSection}>
-          <Text style={styles.address}>
-            📍 {smartWalletPubkey?.toBase58().slice(0, 8)}...
-            {smartWalletPubkey?.toBase58().slice(-8)}
-          </Text>
-          
-          <View style={styles.actions}>
-            <Button
-              title={isSigning ? '✍️ Signing...' : '✍️ Sign Message'}
-              onPress={handleSign}
-              disabled={isSigning}
-            />
-            <Button
-              title="🚪 Disconnect"
-              onPress={() => disconnect()}
-              color="#ff6b6b"
-            />
-          </View>
-        </View>
       )}
-
+      
       {error && (
-        <Text style={styles.error}>
-          ⚠️ {error.message}
+        <Text style={{ color: 'red' }}>
+          Error: {error.message}
         </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  connectSection: {
-    alignItems: 'center',
-  },
-  walletSection: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  address: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    backgroundColor: '#e9ecef',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  actions: {
-    gap: 10,
-    width: '100%',
-  },
-  error: {
-    color: '#dc3545',
-    marginTop: 20,
-    textAlign: 'center',
-  },
-});
-```
-
----
-
-## 🏗️ Architecture
-
-```mermaid
-graph TD
-    A[Mobile App] --> B[LazorKitWalletProvider]
-    B --> C[useLazorWallet Hook]
-    C --> D[Wallet Store]
-    D --> E[Browser Utils]
-    D --> F[Wallet Actions]
-    F --> G[Solana Program]
-    F --> H[Paymaster Service]
-    E --> I[Passkey Authentication]
-    G --> J[Smart Wallet]
 ```
 
 ---
@@ -222,120 +167,76 @@ graph TD
 
 ### `useLazorWallet()`
 
-The main hook that provides wallet functionality.
+The main hook providing wallet functionality:
 
 ```tsx
 const {
   // State
-  smartWalletPubkey,    // PublicKey | null - The smart wallet address
-  isConnected,          // boolean - Connection status
-  isConnecting,         // boolean - Connection in progress
-  isSigning,           // boolean - Signing in progress
+  smartWalletPubkey,    // PublicKey | null - Smart wallet public key
+  isConnected,          // boolean - Connection status  
   isLoading,           // boolean - General loading state
-  error,               // Error | null - Last error
-  connection,          // Connection - Solana RPC connection
+  isConnecting,        // boolean - Connection in progress
+  isSigning,          // boolean - Transaction signing in progress
+  error,              // Error | null - Last error that occurred
+  connection,         // Connection - Solana RPC connection
 
-  // Actions
-  connect,             // (options: ConnectOptions) => Promise<WalletInfo>
-  disconnect,          // (options?: DisconnectOptions) => Promise<void>
-  signMessage,         // (txn: TransactionInstruction, options: SignOptions) => Promise<string>
+  // Actions  
+  connect,            // (options: ConnectOptions) => Promise<WalletInfo>
+  disconnect,         // (options?: DisconnectOptions) => Promise<void>
+  signMessage,        // (instruction: TransactionInstruction, options: SignOptions) => Promise<string>
 } = useLazorWallet();
+```
+
+### `LazorKitWalletProvider`
+
+Provider component props:
+
+```tsx
+type ProviderProps = {
+  rpcUrl?: string;        // Solana RPC endpoint (default: devnet)
+  ipfsUrl?: string;       // LazorKit portal URL  
+  paymasterUrl?: string;  // Paymaster service URL
+  children: React.ReactNode;
+};
 ```
 
 ### Type Definitions
 
 ```typescript
-// Core wallet information
+// Wallet information returned after connection
 type WalletInfo = {
-  credentialId: string;
-  passkeyPubkey: number[];
-  expo: string;
-  platform: string;
-  smartWallet: string;
-  smartWalletAuthenticator: string;
+  credentialId: string;           // Passkey credential ID
+  passkeyPubkey: number[];       // Passkey public key bytes
+  expo: string;                  // Expo configuration
+  platform: string;             // Device platform
+  smartWallet: string;           // Smart wallet address (base58)
+  smartWalletAuthenticator: string; // Authenticator address (base58)
 };
 
 // Connection options
 type ConnectOptions = {
-  redirectUrl: string;
-  onSuccess?: (wallet: WalletInfo) => void;
-  onFail?: (error: Error) => void;
+  redirectUrl: string;                      // App redirect URL after auth
+  onSuccess?: (wallet: WalletInfo) => void; // Success callback
+  onFail?: (error: Error) => void;          // Error callback
 };
 
-// Signing options
+// Signing options  
 type SignOptions = {
-  redirectUrl: string;
-  onSuccess?: (signature: string) => void;
-  onFail?: (error: Error) => void;
+  redirectUrl: string;                    // App redirect URL after signing
+  onSuccess?: (signature: string) => void; // Success callback  
+  onFail?: (error: Error) => void;        // Error callback
 };
 
 // Disconnect options
 type DisconnectOptions = {
-  onSuccess?: () => void;
-  onFail?: (error: Error) => void;
+  onSuccess?: () => void;         // Success callback
+  onFail?: (error: Error) => void; // Error callback  
 };
 
-// Provider configuration
+// Wallet configuration
 type WalletConfig = {
-  rpcUrl?: string;
-  ipfsUrl?: string;
-  paymasterUrl?: string;
-};
-```
-
----
-
-## 🎨 Advanced Examples
-
-### Custom Transaction
-
-```tsx
-import { SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-
-const sendSol = async () => {
-  const instruction = SystemProgram.transfer({
-    fromPubkey: smartWalletPubkey!,
-    toPubkey: new PublicKey('RECIPIENT_ADDRESS'),
-    lamports: 0.1 * LAMPORTS_PER_SOL,
-  });
-
-  await signMessage(instruction, {
-    redirectUrl: 'exp://localhost:8081',
-    onSuccess: (signature) => {
-      console.log('💸 SOL transferred! Signature:', signature);
-    },
-    onFail: (error) => {
-      console.error('Transfer failed:', error);
-    },
-  });
-};
-```
-
-### Error Handling
-
-```tsx
-const connectWithErrorHandling = async () => {
-  try {
-    await connect({
-      redirectUrl: 'exp://localhost:8081',
-      onSuccess: (wallet) => {
-        // Show success toast
-        showToast('Wallet connected successfully! 🎉');
-      },
-      onFail: (error) => {
-        // Handle specific error types
-        if (error.message.includes('User cancelled')) {
-          showToast('Connection cancelled by user');
-        } else if (error.message.includes('Network')) {
-          showToast('Network error. Please try again.');
-        } else {
-          showToast('Connection failed. Please try again.');
-        }
-      },
-    });
-  } catch (error) {
-    console.error('Unexpected error:', error);
-  }
+  ipfsUrl: string;      // LazorKit portal URL
+  paymasterUrl: string; // Paymaster service URL
 };
 ```
 
@@ -346,119 +247,213 @@ const connectWithErrorHandling = async () => {
 ### Environment Setup
 
 ```tsx
-// Development
+// Development (Devnet)
 <LazorKitWalletProvider
   rpcUrl="https://api.devnet.solana.com"
   ipfsUrl="https://portal.lazor.sh"
   paymasterUrl="https://lazorkit-paymaster.onrender.com"
 >
 
-// Production (when available)
+// Custom RPC
 <LazorKitWalletProvider
-  rpcUrl="https://api.mainnet-beta.solana.com"
+  rpcUrl="https://your-custom-rpc.com"
   ipfsUrl="https://portal.lazor.sh"
-  paymasterUrl="https://lazorkit-paymaster.onrender.com"
+  paymasterUrl="https://your-paymaster.com"
 >
 ```
 
-### Custom Styling
+### Constants Available
 
 ```tsx
-import { TouchableOpacity } from 'react-native';
-
-const CustomWalletButton = () => {
-  const { connect, isConnecting } = useLazorWallet();
-
-  return (
-    <TouchableOpacity
-      style={[styles.button, isConnecting && styles.loading]}
-      onPress={() => connect({ 
-        redirectUrl: 'your-app://redirect',
-        onSuccess: (wallet) => console.log('Connected!', wallet),
-        onFail: (error) => console.error('Failed:', error)
-      })}
-      disabled={isConnecting}
-    >
-      <Text style={styles.buttonText}>
-        {isConnecting ? '🔄' : '🔗'} Connect Wallet
-      </Text>
-    </TouchableOpacity>
-  );
-};
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  loading: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
+import { 
+  DEFAULT_RPC_ENDPOINT,    // 'https://api.devnet.solana.com'
+  DEFAULT_COMMITMENT,      // 'confirmed'
+  DEFAULTS                 // Default URLs object
+} from '@lazorkit/wallet-mobile-adapter';
 ```
 
 ---
 
-## 🚨 Current Limitations
+## 💡 Advanced Usage
 
-- **iOS Only** - Android support coming soon
-- **Devnet Only** - Mainnet support in development
-- **Expo Required** - For web browser functionality
-- **Passkey Support** - Device must support passkeys/biometric auth
+### Custom Transaction
+
+```tsx
+import { SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+const sendSOL = async () => {
+  if (!smartWalletPubkey) return;
+
+  const instruction = SystemProgram.transfer({
+    fromPubkey: smartWalletPubkey,
+    toPubkey: new PublicKey('RECIPIENT_WALLET_ADDRESS'),
+    lamports: 0.1 * LAMPORTS_PER_SOL,
+  });
+
+  try {
+    const signature = await signMessage(instruction, {
+      redirectUrl: 'exp://127.0.0.1:8081',
+      onSuccess: (sig) => console.log('Transfer successful:', sig),
+      onFail: (err) => console.error('Transfer failed:', err),
+    });
+    
+    return signature;
+  } catch (error) {
+    console.error('Transaction failed:', error);
+    throw error;
+  }
+};
+```
+
+### Error Handling
+
+```tsx
+const connectWithRetry = async (maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await connect({
+        redirectUrl: 'exp://127.0.0.1:8081',
+        onSuccess: (wallet) => {
+          console.log(`Connected on attempt ${attempt}:`, wallet.smartWallet);
+        },
+        onFail: (error) => {
+          console.log(`Attempt ${attempt} failed:`, error.message);
+          if (attempt === maxRetries) {
+            throw error;
+          }
+        },
+      });
+      break; // Success, exit loop
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error('All connection attempts failed');
+        throw error;
+      }
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+};
+```
+
+### Multiple Instructions
+
+```tsx
+const executeMultipleInstructions = async () => {
+  if (!smartWalletPubkey) return;
+
+  // Create multiple instructions
+  const instructions = [
+    // Memo instruction
+    new anchor.web3.TransactionInstruction({
+      keys: [],
+      programId: new anchor.web3.PublicKey('Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo'),
+      data: Buffer.from('Batch transaction', 'utf-8'),
+    }),
+    // Add more instructions as needed
+  ];
+
+  // Sign each instruction (or combine them in your smart contract)
+  for (const instruction of instructions) {
+    try {
+      await signMessage(instruction, {
+        redirectUrl: 'exp://127.0.0.1:8081',
+        onSuccess: (sig) => console.log('Instruction signed:', sig),
+        onFail: (err) => console.error('Instruction failed:', err),
+      });
+    } catch (error) {
+      console.error('Batch execution failed:', error);
+      break;
+    }
+  }
+};
+```
 
 ---
 
-## 🗺️ Roadmap
+## 🔒 Security Considerations
 
-- [ ] 🤖 **Android Support** - Full cross-platform compatibility
-- [ ] 🌐 **Mainnet Support** - Production-ready deployments
-- [ ] 🎨 **UI Components** - Pre-built wallet UI components
-- [ ] 📊 **Analytics** - Built-in usage analytics
-- [ ] 🔐 **Advanced Security** - Additional security features
+- **Passkey Security**: Wallet creation relies on device biometric security
+- **Redirect URLs**: Always use your app's registered redirect URL scheme  
+- **Storage**: Wallet data is persisted securely using AsyncStorage
+- **Network**: Currently supports Solana Devnet only
+- **Validation**: Always validate transaction instructions before signing
+
+---
+
+## 🚨 Requirements & Limitations
+
+### Requirements
+- React Native 0.60+
+- Expo SDK 48+ (for `expo-web-browser`)
+- iOS 16+ or Android 9+ (for passkey support)
+
+### Current Limitations  
+- **Devnet Only** - Mainnet support coming soon
+- **Mobile Only** - Web browser support planned
+- **Single Instruction** - Multi-instruction transactions need custom implementation
+- **iOS Optimized** - Android support may vary
+
+---
+
+## 🛠️ Development
+
+```bash
+# Clone the repository
+git clone https://github.com/lazorkit/wallet-mobile-adapter
+cd wallet-mobile-adapter
+
+# Install dependencies
+yarn install
+
+# Build the package
+yarn build
+
+# Run tests
+yarn test
+```
+
+---
+
+## 📝 Changelog
+
+### v1.2.33
+- Improved AsyncStorage error handling
+- Enhanced type safety
+- Better error messages and logging
+
+### v1.2.x
+- Added persistent wallet storage
+- Improved connection stability
+- Enhanced passkey authentication flow
 
 ---
 
 ## 🤝 Contributing
 
-We love contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
-
-```bash
-# Development setup
-git clone https://github.com/lazor-kit/wallet-mobile-adapter
-cd wallet-mobile-adapter
-yarn install
-yarn start
-```
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and development process.
 
 ---
 
-## 🆘 Support & Community
+## 🆘 Support
 
 - 📖 **Documentation**: [docs.lazor.sh](https://docs.lazor.sh)
-- 💬 **Discord**: [Join our community](https://discord.gg/lazor)
-- 🐦 **Twitter**: [@lazor_kit](https://twitter.com/lazor_kit)
+- 🐦 **Twitter**: [@lazor_kit](https://twitter.com/lazorkit)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/lazor-kit/wallet-mobile-adapter/issues)
 
 ---
 
 ## 📄 License
 
-MIT © [lazorkit](https://github.com/lazor-kit)
+ISC © [LazorKit](https://github.com/lazor-kit)
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the lazorkit team</p>
+  <p>Made with ❤️ by the LazorKit team</p>
   <p>
     <a href="https://lazorkit.xyz">🌐 Website</a> •
     <a href="https://docs.lazor.sh">📖 Docs</a> •
-    <a href="https://x.com/lazorkit">💬 X</a>
+    <a href="https://twitter.com/lazorkit">🐦 Twitter</a>
   </p>
 </div>

@@ -12,8 +12,8 @@ export const STORAGE_KEYS = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  CONNECT: '/connect',
-  SIGN: '/sign',
+  CONNECT: '?action=connect',
+  SIGN: '?action=sign',
 } as const;
 
 export const DEFAULTS = {

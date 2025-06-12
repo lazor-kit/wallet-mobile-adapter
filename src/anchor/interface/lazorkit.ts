@@ -43,9 +43,7 @@ export class LazorKitProgram {
   }
 
   async getLastestSmartWallet(): Promise<anchor.web3.PublicKey> {
-    const seqData = await this.program.account.smartWalletSeq.fetch(
-      this.smartWalletSeq
-    );
+    const seqData = await this.program.account.smartWalletSeq.fetch(this.smartWalletSeq);
     return anchor.web3.PublicKey.findProgramAddressSync(
       [constants.SMART_WALLET_SEED, seqData.seq.toArrayLike(Buffer, 'le', 8)],
       this.programId
@@ -55,9 +53,7 @@ export class LazorKitProgram {
   async getSmartWalletConfigData(
     smartWallet: anchor.web3.PublicKey
   ): Promise<types.SmartWalletConfig> {
-    return this.program.account.smartWalletConfig.fetch(
-      this.smartWalletConfig(smartWallet)
-    );
+    return this.program.account.smartWalletConfig.fetch(this.smartWalletConfig(smartWallet));
   }
 
   smartWalletAuthenticator(
@@ -71,9 +67,7 @@ export class LazorKitProgram {
   async getSmartWalletAuthenticatorData(
     smartWalletAuthenticator: anchor.web3.PublicKey
   ): Promise<types.SmartWalletAuthenticator> {
-    return this.program.account.smartWalletAuthenticator.fetch(
-      smartWalletAuthenticator
-    );
+    return this.program.account.smartWalletAuthenticator.fetch(smartWalletAuthenticator);
   }
 
   smartWalletConfig(smartWallet: anchor.web3.PublicKey): anchor.web3.PublicKey {
@@ -91,10 +85,7 @@ export class LazorKitProgram {
   }
 
   get config(): anchor.web3.PublicKey {
-    return anchor.web3.PublicKey.findProgramAddressSync(
-      [constants.CONFIG_SEED],
-      this.programId
-    )[0];
+    return anchor.web3.PublicKey.findProgramAddressSync([constants.CONFIG_SEED], this.programId)[0];
   }
 
   async initializeTxn(
@@ -145,17 +136,10 @@ export class LazorKitProgram {
     const configData = await this.program.account.config.fetch(this.config);
     const smartWallet = await this.getLastestSmartWallet();
 
-    const [smartWalletAuthenticator] = this.smartWalletAuthenticator(
-      passkeyPubkey,
-      smartWallet
-    );
+    const [smartWalletAuthenticator] = this.smartWalletAuthenticator(passkeyPubkey, smartWallet);
     const ruleInstruction =
       ruleIns ||
-      (await this.defaultRuleProgram.initRuleIns(
-        payer,
-        smartWallet,
-        smartWalletAuthenticator
-      ));
+      (await this.defaultRuleProgram.initRuleIns(payer, smartWallet, smartWalletAuthenticator));
 
     const remainingAccounts = ruleInstruction.keys.map((account) => ({
       pubkey: account.pubkey,
@@ -194,22 +178,15 @@ export class LazorKitProgram {
     smartWallet: anchor.web3.PublicKey,
     ruleIns: anchor.web3.TransactionInstruction | null,
     cpiIns: anchor.web3.TransactionInstruction | null,
-    executeAction: anchor.IdlTypes<Lazorkit>['action'] = types.ExecuteAction
-      .ExecuteCpi,
+    executeAction: anchor.IdlTypes<Lazorkit>['action'] = types.ExecuteAction.ExecuteCpi,
     createNewAuthenticator: number[] | null = null,
     verifyInstructionIndex: number = 1
   ): Promise<anchor.web3.Transaction> {
-    const [smartWalletAuthenticator] = this.smartWalletAuthenticator(
-      passkeyPubkey,
-      smartWallet
-    );
+    const [smartWalletAuthenticator] = this.smartWalletAuthenticator(passkeyPubkey, smartWallet);
 
     const ruleInstruction =
       ruleIns ||
-      (await this.defaultRuleProgram.checkRuleIns(
-        smartWallet,
-        smartWalletAuthenticator
-      ));
+      (await this.defaultRuleProgram.checkRuleIns(smartWallet, smartWalletAuthenticator));
 
     const ruleData: types.CpiData = {
       data: ruleInstruction.data,
@@ -249,9 +226,7 @@ export class LazorKitProgram {
 
     const clientDataJSONDigest = sha256.array(clientDataJsonRaw);
 
-    const message = Buffer.from(
-      new Uint8Array([...authenticatorDataRaw, ...clientDataJSONDigest])
-    );
+    const message = Buffer.from(new Uint8Array([...authenticatorDataRaw, ...clientDataJSONDigest]));
 
     const verifySignatureIx = createSecp256r1Instruction(
       message,
@@ -305,9 +280,7 @@ export class LazorKitProgram {
       .add(executeInstructionIx);
 
     txn.feePayer = payer;
-    txn.recentBlockhash = (
-      await this.connection.getLatestBlockhash()
-    ).blockhash;
+    txn.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
     return txn;
   }
 
@@ -346,8 +319,9 @@ export class LazorKitProgram {
       return { smartWalletAuthenticator: null, smartWallet: null };
     }
 
-    const smartWalletAuthenticatorData =
-      await this.getSmartWalletAuthenticatorData(accounts[0].pubkey);
+    const smartWalletAuthenticatorData = await this.getSmartWalletAuthenticatorData(
+      accounts[0].pubkey
+    );
 
     return {
       smartWalletAuthenticator: accounts[0].pubkey,

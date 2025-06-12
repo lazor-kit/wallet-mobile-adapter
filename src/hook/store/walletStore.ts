@@ -1,5 +1,4 @@
 import * as anchor from '@coral-xyz/anchor';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { DEFAULT_COMMITMENT, DEFAULT_RPC_ENDPOINT, DEFAULTS, STORAGE_KEYS } from '../../constants';
@@ -7,11 +6,23 @@ import { logger } from '../utils/logger';
 import { connectAction, disconnectAction, signMessageAction } from './actions';
 import { WalletState, WalletConfig, WalletInfo, ConnectOptions } from '../types';
 
+// Dynamic import of AsyncStorage to handle cases where it's not available
+let AsyncStorage: any = null;
+try {
+  AsyncStorage = require('@react-native-async-storage/async-storage').default;
+} catch (error) {
+  logger.warn('AsyncStorage not available - persistence will be disabled', error);
+}
+
 // The secure storage implementation
 const storage = {
   getItem: async (name: string): Promise<string | null> => {
     try {
-      if (!AsyncStorage) return null;
+      // Check if AsyncStorage is available and has the required methods
+      if (!AsyncStorage || typeof AsyncStorage.getItem !== 'function') {
+        logger.warn('AsyncStorage not available - persistence disabled');
+        return null;
+      }
       return await AsyncStorage.getItem(name);
     } catch (error) {
       logger.error('Error reading from AsyncStorage', error);
@@ -20,7 +31,11 @@ const storage = {
   },
   setItem: async (name: string, value: string): Promise<void> => {
     try {
-      if (!AsyncStorage) return;
+      // Check if AsyncStorage is available and has the required methods
+      if (!AsyncStorage || typeof AsyncStorage.setItem !== 'function') {
+        logger.warn('AsyncStorage not available - persistence disabled');
+        return;
+      }
       await AsyncStorage.setItem(name, value);
     } catch (error) {
       logger.error('Error writing to AsyncStorage', error);
@@ -28,7 +43,11 @@ const storage = {
   },
   removeItem: async (name: string): Promise<void> => {
     try {
-      if (!AsyncStorage) return;
+      // Check if AsyncStorage is available and has the required methods
+      if (!AsyncStorage || typeof AsyncStorage.removeItem !== 'function') {
+        logger.warn('AsyncStorage not available - persistence disabled');
+        return;
+      }
       await AsyncStorage.removeItem(name);
     } catch (error) {
       logger.error('Error removing from AsyncStorage', error);

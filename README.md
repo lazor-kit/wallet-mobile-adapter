@@ -50,7 +50,7 @@ Wrap your app with `LazorKitWalletProvider`:
 ```tsx
 import React from 'react';
 import { LazorKitWalletProvider } from '@lazorkit/wallet-mobile-adapter';
-
+const APP_REDIRECT_URL = "your-app-schema://"
 export default function App() {
   return (
     <LazorKitWalletProvider
@@ -87,7 +87,7 @@ export function WalletDemo() {
   const handleConnect = async () => {
     try {
       await connect({
-        redirectUrl: 'exp://127.0.0.1:8081', // Your app's redirect URL
+        redirectUrl: APP_REDIRECT_URL // Your app's redirect URL
         onSuccess: (wallet) => {
           Alert.alert('Success', `Connected to ${wallet.smartWallet.slice(0, 8)}...`);
         },

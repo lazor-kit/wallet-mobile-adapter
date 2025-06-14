@@ -51,6 +51,7 @@ Wrap your app with `LazorKitWalletProvider`:
 import React from 'react';
 import { LazorKitWalletProvider } from '@lazorkit/wallet-mobile-adapter';
 const APP_REDIRECT_URL = "your-app-schema://"
+
 export default function App() {
   return (
     <LazorKitWalletProvider

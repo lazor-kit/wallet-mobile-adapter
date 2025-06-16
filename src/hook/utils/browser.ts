@@ -29,10 +29,7 @@ export const handleAuthRedirect = (url: string): WalletInfo | null => {
 };
 
 // Opens a browser for authentication
-export const openBrowser = async (
-  url: string,
-  redirectUrl: string
-): Promise<string> => {
+export const openBrowser = async (url: string, redirectUrl: string): Promise<string> => {
   if (Platform.OS === 'ios') {
     const result = await WebBrowser.openAuthSessionAsync(url, redirectUrl);
     if (result.type !== 'success') {
@@ -81,9 +78,7 @@ export const handleBrowserResult = (url: string): BrowserResult => {
 
   const signature = parsed.searchParams.get('signature');
   const clientDataJsonBase64 = parsed.searchParams.get('clientDataJSONReturn');
-  const authenticatorDataBase64 = parsed.searchParams.get(
-    'authenticatorDataReturn'
-  );
+  const authenticatorDataBase64 = parsed.searchParams.get('authenticatorDataReturn');
 
   if (!signature || !clientDataJsonBase64 || !authenticatorDataBase64) {
     throw new Error('Missing signature or message from redirect');
@@ -94,4 +89,4 @@ export const handleBrowserResult = (url: string): BrowserResult => {
     clientDataJsonBase64,
     authenticatorDataBase64,
   };
-}; 
+};

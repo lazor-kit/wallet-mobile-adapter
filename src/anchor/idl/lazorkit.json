@@ -210,6 +210,10 @@
           }
         },
         {
+          "name": "credential_id",
+          "type": "bytes"
+        },
+        {
           "name": "rule_data",
           "type": "bytes"
         }
@@ -741,6 +745,14 @@
       "code": 6009,
       "name": "InvalidRuleInstruction",
       "msg": "Invalid rule instruction provided"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidTimestamp"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidNonce"
     }
   ],
   "types": [
@@ -907,6 +919,13 @@
             "type": "pubkey"
           },
           {
+            "name": "credential_id",
+            "docs": [
+              "The credential ID this authenticator belongs to"
+            ],
+            "type": "bytes"
+          },
+          {
             "name": "bump",
             "docs": [
               "Bump seed for PDA derivation"
@@ -937,6 +956,10 @@
               "Optional rule program that governs this wallet's operations"
             ],
             "type": "pubkey"
+          },
+          {
+            "name": "last_nonce",
+            "type": "u64"
           },
           {
             "name": "bump",

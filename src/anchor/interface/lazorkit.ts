@@ -12,6 +12,7 @@ if (typeof globalThis.structuredClone !== 'function') {
 }
 import { Buffer } from 'buffer';
 import { sha256 } from 'js-sha256';
+import * as borsh from 'borsh';
 
 export class LazorKitProgram {
   readonly connection: anchor.web3.Connection;
@@ -131,7 +132,8 @@ export class LazorKitProgram {
   async createSmartWalletTxn(
     passkeyPubkey: number[],
     ruleIns: anchor.web3.TransactionInstruction | null,
-    payer: anchor.web3.PublicKey
+    payer: anchor.web3.PublicKey,
+    credentialId: string
   ): Promise<anchor.web3.Transaction> {
     const configData = await this.program.account.config.fetch(this.config);
     const smartWallet = await this.getLastestSmartWallet();
@@ -148,7 +150,7 @@ export class LazorKitProgram {
     }));
 
     const createSmartWalletIx = await this.program.methods
-      .createSmartWallet(passkeyPubkey, ruleInstruction.data)
+      .createSmartWallet(passkeyPubkey, Buffer.from(credentialId, 'base64'), ruleInstruction.data)
       .accountsPartial({
         signer: payer,
         smartWalletSeq: this.smartWalletSeq,
@@ -327,5 +329,40 @@ export class LazorKitProgram {
       smartWalletAuthenticator: accounts[0].pubkey,
       smartWallet: smartWalletAuthenticatorData.smartWallet,
     };
+  }
+
+  async getMessage(smartWallet: string) {
+    const smartWalletData = await this.getSmartWalletConfigData(
+      new anchor.web3.PublicKey(smartWallet)
+    );
+    const message = {
+      nonce: smartWalletData.nonce,
+      timestamp: new anchor.BN(Date.now()),
+    };
+
+    class Message {
+      nonce: anchor.BN;
+      timestamp: anchor.BN;
+      constructor(fields: { nonce: anchor.BN; timestamp: anchor.BN }) {
+        this.nonce = fields.nonce;
+        this.timestamp = fields.timestamp;
+      }
+    }
+
+    const schema = new Map([
+      [
+        Message,
+        {
+          kind: 'struct',
+          fields: [
+            ['nonce', 'u64'],
+            ['timestamp', 'u64'],
+          ],
+        },
+      ],
+    ]);
+    const encodedMessage = borsh.serialize(schema, new Message(message));
+
+    return encodedMessage;
   }
 }

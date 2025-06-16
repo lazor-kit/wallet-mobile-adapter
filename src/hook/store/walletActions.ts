@@ -59,8 +59,9 @@ export const createWalletActions = (
     setLoading(true);
 
     try {
-      let { smartWallet, smartWalletAuthenticator } =
-        await lazorProgram.getSmartWalletByPasskey(data.passkeyPubkey);
+      let { smartWallet, smartWalletAuthenticator } = await lazorProgram.getSmartWalletByPasskey(
+        data.passkeyPubkey
+      );
 
       if (!smartWallet || !smartWalletAuthenticator) {
         logger.log('💡 SmartWallet missing; creating a new one...');
@@ -70,7 +71,8 @@ export const createWalletActions = (
         const createTxn = await lazorProgram.createSmartWalletTxn(
           data.passkeyPubkey,
           null,
-          feePayer
+          feePayer,
+          data.credentialId
         );
 
         const serialized = createTxn
@@ -83,19 +85,12 @@ export const createWalletActions = (
         });
 
         if (sendError) {
-          throw new Error(
-            `Create wallet relayer error: ${JSON.stringify(sendError)}`
-          );
+          throw new Error(`Create wallet relayer error: ${JSON.stringify(sendError)}`);
         }
 
-        await lazorProgram.connection.confirmTransaction(
-          String(sendResult.signature),
-          'confirmed'
-        );
+        await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
 
-        const fetched = await lazorProgram.getSmartWalletByPasskey(
-          data.passkeyPubkey
-        );
+        const fetched = await lazorProgram.getSmartWalletByPasskey(data.passkeyPubkey);
         smartWallet = fetched.smartWallet;
         smartWalletAuthenticator = fetched.smartWalletAuthenticator;
 
@@ -145,15 +140,10 @@ export const createWalletActions = (
       });
 
       if (sendError) {
-        throw new Error(
-          `Execute wallet relayer error: ${JSON.stringify(sendError)}`
-        );
+        throw new Error(`Execute wallet relayer error: ${JSON.stringify(sendError)}`);
       }
 
-      await lazorProgram.connection.confirmTransaction(
-        String(sendResult.signature),
-        'confirmed'
-      );
+      await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
 
       return sendResult.signature;
     } catch (error: any) {
@@ -168,4 +158,4 @@ export const createWalletActions = (
     saveWallet,
     executeWallet,
   };
-}; 
+};

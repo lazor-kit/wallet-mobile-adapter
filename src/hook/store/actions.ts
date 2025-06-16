@@ -10,6 +10,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { logger } from '../utils/logger';
 import * as anchor from '@coral-xyz/anchor';
 import { WalletState, ConnectOptions, SignOptions } from '../types';
+import { LazorKitProgram } from '../../anchor/interface/lazorkit';
 
 // Connects to the wallet
 export const connectAction = async (
@@ -96,10 +97,11 @@ export const signMessageAction = async (
   set({ isSigning: true, error: null });
 
   try {
-    const hardcodeMessage = Buffer.from('Hello');
+    const lazorProgram = new LazorKitProgram(connection);
+    const message = await lazorProgram.getMessage(wallet.smartWallet);
     const redirectUrl = options.redirectUrl;
     const signUrl = `${config.ipfsUrl}/${API_ENDPOINTS.SIGN}&message=${encodeURIComponent(
-      hardcodeMessage.toString()
+      message.toString()
     )}t&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     await openSignBrowser(

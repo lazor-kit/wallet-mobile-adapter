@@ -83,7 +83,10 @@ export class LazorKitProgram {
     smartWallet: anchor.web3.PublicKey
   ): [anchor.web3.PublicKey, number] {
     const hash = hashSeeds(passkey, smartWallet);
-    return anchor.web3.PublicKey.findProgramAddressSync([hash], this.programId);
+    return anchor.web3.PublicKey.findProgramAddressSync(
+      [constants.SMART_WALLET_AUTHENTICATOR_SEED, smartWallet.toBuffer(), hash],
+      this.programId
+    );
   }
 
   async getSmartWalletAuthenticatorData(
@@ -348,35 +351,15 @@ export class LazorKitProgram {
       new anchor.web3.PublicKey(smartWallet)
     );
 
-    // NOTE: field name may differ; adjust to your IDL
-    const nonce = (smartWalletData as any).nonce ?? (smartWalletData as any).lastNonce;
+    // Manually serialize the message struct with nonce (u64) and timestamp (i64)
+    const buffer = Buffer.alloc(16); // 8 bytes for nonce + 8 bytes for timestamp
 
-    class Message {
-      nonce: anchor.BN;
-      timestamp: anchor.BN;
-      constructor(fields: { nonce: anchor.BN; timestamp: anchor.BN }) {
-        this.nonce = fields.nonce;
-        this.timestamp = fields.timestamp;
-      }
-    }
+    // Write nonce as little-endian u64
+    buffer.writeBigUInt64LE(BigInt(smartWalletData.lastNonce.toString()), 0);
 
-    const schema = new Map([
-      [
-        Message,
-        {
-          kind: 'struct',
-          fields: [
-            ['nonce', 'u64'],
-            ['timestamp', 'u64'],
-          ],
-        },
-      ],
-    ]);
+    // Write timestamp as little-endian i64
+    buffer.writeBigInt64LE(BigInt(Number(Date.now() / 1000)), 8);
 
-    const encoded = borsh.serialize(
-      schema,
-      new Message({ nonce, timestamp: new anchor.BN(Date.now()) })
-    );
-    return Buffer.from(encoded);
+    return buffer;
   }
 }

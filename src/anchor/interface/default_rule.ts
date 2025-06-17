@@ -29,10 +29,7 @@ export class DefaultRuleProgram {
   }
 
   get config(): anchor.web3.PublicKey {
-    return anchor.web3.PublicKey.findProgramAddressSync(
-      [constants.CONFIG_SEED],
-      this.programId
-    )[0];
+    return anchor.web3.PublicKey.findProgramAddressSync([constants.CONFIG_SEED], this.programId)[0];
   }
 
   async initRuleIns(

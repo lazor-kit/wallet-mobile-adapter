@@ -99,9 +99,16 @@ export const signMessageAction = async (
   try {
     const lazorProgram = new LazorKitProgram(connection);
     const message = await lazorProgram.getMessage(wallet.smartWallet);
+
+    const encodedChallenge = Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
     const redirectUrl = options.redirectUrl;
     const signUrl = `${config.ipfsUrl}/${API_ENDPOINTS.SIGN}&message=${encodeURIComponent(
-      message.toString()
+      encodedChallenge
     )}t&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     await openSignBrowser(

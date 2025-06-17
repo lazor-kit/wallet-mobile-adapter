@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/lazorkit.json`.
  */
 export type Lazorkit = {
-  "address": "33tS3mSoyvdmKWxb6bgSL657AqH4Wxsu9R6GnvjtZdEd",
+  "address": "6Jh4kA4rkZquv9XofKqgbyrRcTDF19uM5HL4xyh6gaSo",
   "metadata": {
     "name": "lazorkit",
     "version": "0.1.0",
@@ -173,6 +173,41 @@ export type Lazorkit = {
           "pda": {
             "seeds": [
               {
+                "kind": "const",
+                "value": [
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  101,
+                  110,
+                  116,
+                  105,
+                  99,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "smartWallet"
+              },
+              {
                 "kind": "arg",
                 "path": "passkey_pubkey.to_hashed_bytes(smart_wallet"
               }
@@ -334,6 +369,41 @@ export type Lazorkit = {
           "name": "smartWalletAuthenticator",
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  101,
+                  110,
+                  116,
+                  105,
+                  99,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "smartWallet"
+              },
               {
                 "kind": "arg",
                 "path": "args.passkey_pubkey.to_hashed_bytes(smart_wallet"
@@ -582,9 +652,30 @@ export type Lazorkit = {
       ],
       "accounts": [
         {
-          "name": "signer",
+          "name": "authority",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "whitelistRulePrograms",
@@ -621,10 +712,6 @@ export type Lazorkit = {
               }
             ]
           }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -790,6 +877,10 @@ export type Lazorkit = {
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
           {
             "name": "createSmartWalletFee",
             "type": "u64"

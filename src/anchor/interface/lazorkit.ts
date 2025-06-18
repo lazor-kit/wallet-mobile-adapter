@@ -12,7 +12,6 @@ if (typeof globalThis.structuredClone !== 'function') {
 }
 import { Buffer } from 'buffer';
 import { sha256 } from 'js-sha256';
-import * as borsh from 'borsh';
 
 export class LazorKitProgram {
   /** Network connection used by all RPC / account queries */
@@ -358,7 +357,7 @@ export class LazorKitProgram {
     buffer.writeBigUInt64LE(BigInt(smartWalletData.lastNonce.toString()), 0);
 
     // Write timestamp as little-endian i64
-    buffer.writeBigInt64LE(BigInt(Number(Date.now() / 1000)), 8);
+    buffer.writeBigInt64LE(BigInt(Math.floor(Date.now() / 1000)), 8);
 
     return buffer;
   }

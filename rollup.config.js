@@ -29,7 +29,6 @@ const mainConfig = {
     'js-sha256',
     'react-native-get-random-values',
     'zustand',
-    'zustand/middleware',
     'buffer',
     'bs58',
     'node-fetch',

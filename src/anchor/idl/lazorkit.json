@@ -6,25 +6,12 @@
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
-  "docs": [
-    "The Lazor Kit program provides smart wallet functionality with passkey authentication"
-  ],
+  "docs": ["The Lazor Kit program provides smart wallet functionality with passkey authentication"],
   "instructions": [
     {
       "name": "create_smart_wallet",
-      "docs": [
-        "Create a new smart wallet with passkey authentication"
-      ],
-      "discriminator": [
-        129,
-        39,
-        235,
-        18,
-        132,
-        68,
-        203,
-        19
-      ],
+      "docs": ["Create a new smart wallet with passkey authentication"],
+      "discriminator": [129, 39, 235, 18, 132, 68, 203, 19],
       "accounts": [
         {
           "name": "signer",
@@ -39,22 +26,7 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  115,
-                  101,
-                  113
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 115, 101, 113
                 ]
               }
             ]
@@ -67,29 +39,8 @@
               {
                 "kind": "const",
                 "value": [
-                  119,
-                  104,
-                  105,
-                  116,
-                  101,
-                  108,
-                  105,
-                  115,
-                  116,
-                  95,
-                  114,
-                  117,
-                  108,
-                  101,
-                  95,
-                  112,
-                  114,
-                  111,
-                  103,
-                  114,
-                  97,
-                  109,
-                  115
+                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
+                  111, 103, 114, 97, 109, 115
                 ]
               }
             ]
@@ -102,20 +53,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116
-                ]
+                "value": [115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116]
               },
               {
                 "kind": "account",
@@ -133,25 +71,8 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 99, 111, 110, 102,
+                  105, 103
                 ]
               },
               {
@@ -169,32 +90,8 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  101,
-                  110,
-                  116,
-                  105,
-                  99,
-                  97,
-                  116,
-                  111,
-                  114
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
+                  101, 110, 116, 105, 99, 97, 116, 111, 114
                 ]
               },
               {
@@ -214,14 +111,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -238,10 +128,7 @@
         {
           "name": "passkey_pubkey",
           "type": {
-            "array": [
-              "u8",
-              33
-            ]
+            "array": ["u8", 33]
           }
         },
         {
@@ -256,19 +143,8 @@
     },
     {
       "name": "execute_instruction",
-      "docs": [
-        "Execute an instruction with passkey authentication"
-      ],
-      "discriminator": [
-        48,
-        18,
-        40,
-        40,
-        75,
-        74,
-        147,
-        110
-      ],
+      "docs": ["Execute an instruction with passkey authentication"],
+      "discriminator": [48, 18, 40, 40, 75, 74, 147, 110],
       "accounts": [
         {
           "name": "payer",
@@ -281,14 +157,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -300,20 +169,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116
-                ]
+                "value": [115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116]
               },
               {
                 "kind": "account",
@@ -331,25 +187,8 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 99, 111, 110, 102,
+                  105, 103
                 ]
               },
               {
@@ -366,32 +205,8 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  101,
-                  110,
-                  116,
-                  105,
-                  99,
-                  97,
-                  116,
-                  111,
-                  114
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
+                  101, 110, 116, 105, 99, 97, 116, 111, 114
                 ]
               },
               {
@@ -412,29 +227,8 @@
               {
                 "kind": "const",
                 "value": [
-                  119,
-                  104,
-                  105,
-                  116,
-                  101,
-                  108,
-                  105,
-                  115,
-                  116,
-                  95,
-                  114,
-                  117,
-                  108,
-                  101,
-                  95,
-                  112,
-                  114,
-                  111,
-                  103,
-                  114,
-                  97,
-                  109,
-                  115
+                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
+                  111, 103, 114, 97, 109, 115
                 ]
               }
             ]
@@ -463,32 +257,8 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  101,
-                  110,
-                  116,
-                  105,
-                  99,
-                  97,
-                  116,
-                  111,
-                  114
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
+                  101, 110, 116, 105, 99, 97, 116, 111, 114
                 ]
               },
               {
@@ -516,19 +286,8 @@
     },
     {
       "name": "initialize",
-      "docs": [
-        "Initialize the program by creating the sequence tracker"
-      ],
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
+      "docs": ["Initialize the program by creating the sequence tracker"],
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
       "accounts": [
         {
           "name": "signer",
@@ -542,14 +301,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -562,29 +314,8 @@
               {
                 "kind": "const",
                 "value": [
-                  119,
-                  104,
-                  105,
-                  116,
-                  101,
-                  108,
-                  105,
-                  115,
-                  116,
-                  95,
-                  114,
-                  117,
-                  108,
-                  101,
-                  95,
-                  112,
-                  114,
-                  111,
-                  103,
-                  114,
-                  97,
-                  109,
-                  115
+                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
+                  111, 103, 114, 97, 109, 115
                 ]
               }
             ]
@@ -598,22 +329,7 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  115,
-                  101,
-                  113
+                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 115, 101, 113
                 ]
               }
             ]
@@ -631,27 +347,14 @@
     },
     {
       "name": "upsert_whitelist_rule_programs",
-      "docs": [
-        "Update the list of whitelisted rule programs"
-      ],
-      "discriminator": [
-        41,
-        238,
-        96,
-        66,
-        217,
-        254,
-        156,
-        163
-      ],
+      "docs": ["Update the list of whitelisted rule programs"],
+      "discriminator": [41, 238, 96, 66, 217, 254, 156, 163],
       "accounts": [
         {
           "name": "authority",
           "writable": true,
           "signer": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "config",
@@ -659,14 +362,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -679,29 +375,8 @@
               {
                 "kind": "const",
                 "value": [
-                  119,
-                  104,
-                  105,
-                  116,
-                  101,
-                  108,
-                  105,
-                  115,
-                  116,
-                  95,
-                  114,
-                  117,
-                  108,
-                  101,
-                  95,
-                  112,
-                  114,
-                  111,
-                  103,
-                  114,
-                  97,
-                  109,
-                  115
+                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
+                  111, 103, 114, 97, 109, 115
                 ]
               }
             ]
@@ -719,68 +394,23 @@
   "accounts": [
     {
       "name": "Config",
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ]
+      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
     },
     {
       "name": "SmartWalletAuthenticator",
-      "discriminator": [
-        126,
-        36,
-        85,
-        166,
-        77,
-        139,
-        221,
-        129
-      ]
+      "discriminator": [126, 36, 85, 166, 77, 139, 221, 129]
     },
     {
       "name": "SmartWalletConfig",
-      "discriminator": [
-        138,
-        211,
-        3,
-        80,
-        65,
-        100,
-        207,
-        142
-      ]
+      "discriminator": [138, 211, 3, 80, 65, 100, 207, 142]
     },
     {
       "name": "SmartWalletSeq",
-      "discriminator": [
-        12,
-        192,
-        82,
-        50,
-        253,
-        49,
-        195,
-        84
-      ]
+      "discriminator": [12, 192, 82, 50, 253, 49, 195, 84]
     },
     {
       "name": "WhitelistRulePrograms",
-      "discriminator": [
-        234,
-        147,
-        45,
-        188,
-        65,
-        212,
-        154,
-        241
-      ]
+      "discriminator": [234, 147, 45, 188, 65, 212, 154, 241]
     }
   ],
   "errors": [
@@ -845,9 +475,7 @@
   "types": [
     {
       "name": "Action",
-      "docs": [
-        "Enum for supported actions in the instruction"
-      ],
+      "docs": ["Enum for supported actions in the instruction"],
       "type": {
         "kind": "enum",
         "variants": [
@@ -888,9 +516,7 @@
     },
     {
       "name": "CpiData",
-      "docs": [
-        "Data for a CPI call (instruction data and account slice)"
-      ],
+      "docs": ["Data for a CPI call (instruction data and account slice)"],
       "type": {
         "kind": "struct",
         "fields": [
@@ -911,19 +537,14 @@
     },
     {
       "name": "ExecuteInstructionArgs",
-      "docs": [
-        "Arguments for the execute_instruction entrypoint"
-      ],
+      "docs": ["Arguments for the execute_instruction entrypoint"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "passkey_pubkey",
             "type": {
-              "array": [
-                "u8",
-                33
-              ]
+              "array": ["u8", 33]
             }
           },
           {
@@ -972,10 +593,7 @@
             "name": "create_new_authenticator",
             "type": {
               "option": {
-                "array": [
-                  "u8",
-                  33
-                ]
+                "array": ["u8", 33]
               }
             }
           }
@@ -984,43 +602,30 @@
     },
     {
       "name": "SmartWalletAuthenticator",
-      "docs": [
-        "Account that stores authentication data for a smart wallet"
-      ],
+      "docs": ["Account that stores authentication data for a smart wallet"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "passkey_pubkey",
-            "docs": [
-              "The public key of the passkey that can authorize transactions"
-            ],
+            "docs": ["The public key of the passkey that can authorize transactions"],
             "type": {
-              "array": [
-                "u8",
-                33
-              ]
+              "array": ["u8", 33]
             }
           },
           {
             "name": "smart_wallet",
-            "docs": [
-              "The smart wallet this authenticator belongs to"
-            ],
+            "docs": ["The smart wallet this authenticator belongs to"],
             "type": "pubkey"
           },
           {
             "name": "credential_id",
-            "docs": [
-              "The credential ID this authenticator belongs to"
-            ],
+            "docs": ["The credential ID this authenticator belongs to"],
             "type": "bytes"
           },
           {
             "name": "bump",
-            "docs": [
-              "Bump seed for PDA derivation"
-            ],
+            "docs": ["Bump seed for PDA derivation"],
             "type": "u8"
           }
         ]
@@ -1028,24 +633,18 @@
     },
     {
       "name": "SmartWalletConfig",
-      "docs": [
-        "Data account for a smart wallet"
-      ],
+      "docs": ["Data account for a smart wallet"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "id",
-            "docs": [
-              "Unique identifier for this smart wallet"
-            ],
+            "docs": ["Unique identifier for this smart wallet"],
             "type": "u64"
           },
           {
             "name": "rule_program",
-            "docs": [
-              "Optional rule program that governs this wallet's operations"
-            ],
+            "docs": ["Optional rule program that governs this wallet's operations"],
             "type": "pubkey"
           },
           {
@@ -1054,9 +653,7 @@
           },
           {
             "name": "bump",
-            "docs": [
-              "Bump seed for PDA derivation"
-            ],
+            "docs": ["Bump seed for PDA derivation"],
             "type": "u8"
           }
         ]
@@ -1064,24 +661,18 @@
     },
     {
       "name": "SmartWalletSeq",
-      "docs": [
-        "Account that maintains the sequence number for smart wallet creation"
-      ],
+      "docs": ["Account that maintains the sequence number for smart wallet creation"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "seq",
-            "docs": [
-              "Current sequence number, incremented for each new smart wallet"
-            ],
+            "docs": ["Current sequence number, incremented for each new smart wallet"],
             "type": "u64"
           },
           {
             "name": "bump",
-            "docs": [
-              "Bump seed for PDA derivation"
-            ],
+            "docs": ["Bump seed for PDA derivation"],
             "type": "u8"
           }
         ]
@@ -1089,26 +680,20 @@
     },
     {
       "name": "WhitelistRulePrograms",
-      "docs": [
-        "Account that stores whitelisted rule program addresses"
-      ],
+      "docs": ["Account that stores whitelisted rule program addresses"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "list",
-            "docs": [
-              "List of whitelisted program addresses"
-            ],
+            "docs": ["List of whitelisted program addresses"],
             "type": {
               "vec": "pubkey"
             }
           },
           {
             "name": "bump",
-            "docs": [
-              "Bump seed for PDA derivation"
-            ],
+            "docs": ["Bump seed for PDA derivation"],
             "type": "u8"
           }
         ]

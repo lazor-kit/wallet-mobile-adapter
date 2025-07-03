@@ -382,7 +382,6 @@ export type Lazorkit = {
         },
         {
           "name": "cpiProgram",
-          "writable": true
         }
       ],
       "args": [

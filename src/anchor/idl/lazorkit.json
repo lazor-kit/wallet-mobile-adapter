@@ -375,8 +375,7 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "cpi_program",
-          "writable": true
+          "name": "cpi_program"
         }
       ],
       "args": [

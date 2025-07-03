@@ -310,7 +310,6 @@ export const createWalletActions = (
 
           const createTxn = await lazorProgram.createSmartWalletTxn(
             data.passkeyPubkey,
-            null,
             feePayer,
             data.credentialId
           );
@@ -386,7 +385,7 @@ export const createWalletActions = (
         Buffer.from(browserResult.signature, 'base64'),
         feePayer,
         new anchor.web3.PublicKey(data.smartWallet),
-        null, // ruleInstruction
+        undefined, // ruleInstruction
         txnIns // cpiInstruction
       );
 

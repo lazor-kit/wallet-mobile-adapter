@@ -1,17 +1,30 @@
 {
-  "address": "6Jh4kA4rkZquv9XofKqgbyrRcTDF19uM5HL4xyh6gaSo",
+  "address": "9gJ7jZaAvUafgTFPoqkCwbuvC9kpZCPtHfHjMkQ66wu9",
   "metadata": {
     "name": "lazorkit",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
-  "docs": ["The Lazor Kit program provides smart wallet functionality with passkey authentication"],
+  "docs": [
+    "The Lazor Kit program provides smart wallet functionality with passkey authentication"
+  ],
   "instructions": [
     {
       "name": "create_smart_wallet",
-      "docs": ["Create a new smart wallet with passkey authentication"],
-      "discriminator": [129, 39, 235, 18, 132, 68, 203, 19],
+      "docs": [
+        "Create a new smart wallet with passkey authentication"
+      ],
+      "discriminator": [
+        129,
+        39,
+        235,
+        18,
+        132,
+        68,
+        203,
+        19
+      ],
       "accounts": [
         {
           "name": "signer",
@@ -26,21 +39,22 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 115, 101, 113
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "whitelist_rule_programs",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
-                  111, 103, 114, 97, 109, 115
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  115,
+                  101,
+                  113
                 ]
               }
             ]
@@ -48,12 +62,28 @@
         },
         {
           "name": "smart_wallet",
+          "docs": [
+            "It is initialized with 0 space because its data is stored in SmartWalletConfig."
+          ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116]
+                "value": [
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -71,8 +101,25 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 99, 111, 110, 102,
-                  105, 103
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               },
               {
@@ -90,8 +137,32 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
-                  101, 110, 116, 105, 99, 97, 116, 111, 114
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  101,
+                  110,
+                  116,
+                  105,
+                  99,
+                  97,
+                  116,
+                  111,
+                  114
                 ]
               },
               {
@@ -107,17 +178,22 @@
         },
         {
           "name": "config",
+          "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
-        },
-        {
-          "name": "default_rule_program"
         },
         {
           "name": "system_program",
@@ -128,27 +204,36 @@
         {
           "name": "passkey_pubkey",
           "type": {
-            "array": ["u8", 33]
+            "array": [
+              "u8",
+              33
+            ]
           }
         },
         {
           "name": "credential_id",
-          "type": "bytes"
-        },
-        {
-          "name": "rule_data",
           "type": "bytes"
         }
       ]
     },
     {
       "name": "execute_instruction",
-      "docs": ["Execute an instruction with passkey authentication"],
-      "discriminator": [48, 18, 40, 40, 75, 74, 147, 110],
+      "docs": [
+        "Execute an instruction with passkey authentication"
+      ],
+      "discriminator": [
+        48,
+        18,
+        40,
+        40,
+        75,
+        74,
+        147,
+        110
+      ],
       "accounts": [
         {
           "name": "payer",
-          "writable": true,
           "signer": true
         },
         {
@@ -157,7 +242,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -169,7 +261,20 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116]
+                "value": [
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -187,8 +292,25 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 99, 111, 110, 102,
-                  105, 103
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               },
               {
@@ -205,8 +327,32 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
-                  101, 110, 116, 105, 99, 97, 116, 111, 114
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  101,
+                  110,
+                  116,
+                  105,
+                  99,
+                  97,
+                  116,
+                  111,
+                  114
                 ]
               },
               {
@@ -221,23 +367,6 @@
           }
         },
         {
-          "name": "whitelist_rule_programs",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
-                  111, 103, 114, 97, 109, 115
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "authenticator_program"
-        },
-        {
           "name": "ix_sysvar",
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
@@ -246,31 +375,8 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "cpi_program"
-        },
-        {
-          "name": "new_smart_wallet_authenticator",
-          "writable": true,
-          "optional": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 97, 117, 116, 104,
-                  101, 110, 116, 105, 99, 97, 116, 111, 114
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "smart_wallet"
-              },
-              {
-                "kind": "arg",
-                "path": "args.create_new_authenticator.unwrap_or([0;\n33]).to_hashed_bytes(smart_wallet"
-              }
-            ]
-          }
+          "name": "cpi_program",
+          "writable": true
         }
       ],
       "args": [
@@ -286,8 +392,19 @@
     },
     {
       "name": "initialize",
-      "docs": ["Initialize the program by creating the sequence tracker"],
-      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "docs": [
+        "Initialize the program by creating the sequence tracker"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
       "accounts": [
         {
           "name": "signer",
@@ -301,21 +418,13 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
-              }
-            ]
-          }
-        },
-        {
-          "name": "whitelist_rule_programs",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
                 "value": [
-                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
-                  111, 103, 114, 97, 109, 115
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -329,14 +438,26 @@
               {
                 "kind": "const",
                 "value": [
-                  115, 109, 97, 114, 116, 95, 119, 97, 108, 108, 101, 116, 95, 115, 101, 113
+                  115,
+                  109,
+                  97,
+                  114,
+                  116,
+                  95,
+                  119,
+                  97,
+                  108,
+                  108,
+                  101,
+                  116,
+                  95,
+                  115,
+                  101,
+                  113
                 ]
               }
             ]
           }
-        },
-        {
-          "name": "default_rule_program"
         },
         {
           "name": "system_program",
@@ -344,156 +465,220 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "upsert_whitelist_rule_programs",
-      "docs": ["Update the list of whitelisted rule programs"],
-      "discriminator": [41, 238, 96, 66, 217, 254, 156, 163],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": ["config"]
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
-              }
-            ]
-          }
-        },
-        {
-          "name": "whitelist_rule_programs",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  119, 104, 105, 116, 101, 108, 105, 115, 116, 95, 114, 117, 108, 101, 95, 112, 114,
-                  111, 103, 114, 97, 109, 115
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "program_id",
-          "type": "pubkey"
-        }
-      ]
     }
   ],
   "accounts": [
     {
       "name": "Config",
-      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
     },
     {
       "name": "SmartWalletAuthenticator",
-      "discriminator": [126, 36, 85, 166, 77, 139, 221, 129]
+      "discriminator": [
+        126,
+        36,
+        85,
+        166,
+        77,
+        139,
+        221,
+        129
+      ]
     },
     {
       "name": "SmartWalletConfig",
-      "discriminator": [138, 211, 3, 80, 65, 100, 207, 142]
+      "discriminator": [
+        138,
+        211,
+        3,
+        80,
+        65,
+        100,
+        207,
+        142
+      ]
     },
     {
       "name": "SmartWalletSeq",
-      "discriminator": [12, 192, 82, 50, 253, 49, 195, 84]
-    },
-    {
-      "name": "WhitelistRulePrograms",
-      "discriminator": [234, 147, 45, 188, 65, 212, 154, 241]
+      "discriminator": [
+        12,
+        192,
+        82,
+        50,
+        253,
+        49,
+        195,
+        84
+      ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidPasskey",
-      "msg": "Invalid passkey provided"
+      "name": "PasskeyMismatch",
+      "msg": "Passkey public key mismatch with stored authenticator"
     },
     {
       "code": 6001,
-      "name": "InvalidAuthenticator",
-      "msg": "Invalid authenticator for smart wallet"
+      "name": "SmartWalletMismatch",
+      "msg": "Smart wallet address mismatch with authenticator"
     },
     {
       "code": 6002,
-      "name": "InvalidRuleProgram",
-      "msg": "Invalid rule program for operation"
+      "name": "AuthenticatorNotFound",
+      "msg": "Smart wallet authenticator account not found or invalid"
     },
     {
       "code": 6003,
-      "name": "InvalidLengthForVerification",
-      "msg": "Invalid instruction length for signature verification"
+      "name": "Secp256r1InvalidLength",
+      "msg": "Secp256r1 instruction has invalid data length"
     },
     {
       "code": 6004,
-      "name": "VerifyHeaderMismatchError",
-      "msg": "Signature header verification failed"
+      "name": "Secp256r1HeaderMismatch",
+      "msg": "Secp256r1 instruction header validation failed"
     },
     {
       "code": 6005,
-      "name": "VerifyDataMismatchError",
-      "msg": "Signature data verification failed"
+      "name": "Secp256r1DataMismatch",
+      "msg": "Secp256r1 signature data validation failed"
     },
     {
       "code": 6006,
-      "name": "InvalidBump",
-      "msg": "Invalid bump seed provided"
+      "name": "Secp256r1InstructionNotFound",
+      "msg": "Secp256r1 instruction not found at specified index"
     },
     {
       "code": 6007,
-      "name": "InvalidAccountInput",
-      "msg": "Invalid or missing required account"
+      "name": "InvalidSignature",
+      "msg": "Invalid signature provided for passkey verification"
     },
     {
       "code": 6008,
-      "name": "InsufficientFunds"
+      "name": "ClientDataInvalidUtf8",
+      "msg": "Client data JSON is not valid UTF-8"
     },
     {
       "code": 6009,
-      "name": "InvalidRuleInstruction",
-      "msg": "Invalid rule instruction provided"
+      "name": "ClientDataJsonParseError",
+      "msg": "Client data JSON parsing failed"
     },
     {
       "code": 6010,
-      "name": "InvalidTimestamp"
+      "name": "ChallengeMissing",
+      "msg": "Challenge field missing from client data JSON"
     },
     {
       "code": 6011,
-      "name": "InvalidNonce"
+      "name": "ChallengeBase64DecodeError",
+      "msg": "Challenge base64 decoding failed"
+    },
+    {
+      "code": 6012,
+      "name": "ChallengeDeserializationError",
+      "msg": "Challenge message deserialization failed"
+    },
+    {
+      "code": 6013,
+      "name": "TimestampTooOld",
+      "msg": "Message timestamp is too far in the past"
+    },
+    {
+      "code": 6014,
+      "name": "TimestampTooNew",
+      "msg": "Message timestamp is too far in the future"
+    },
+    {
+      "code": 6015,
+      "name": "SlotTooOld",
+      "msg": "Message slot is too far in the past"
+    },
+    {
+      "code": 6016,
+      "name": "SlotTooNew",
+      "msg": "Message slot is too far in the future"
+    },
+    {
+      "code": 6017,
+      "name": "NonceMismatch",
+      "msg": "Nonce mismatch: expected different value"
+    },
+    {
+      "code": 6018,
+      "name": "NonceOverflow",
+      "msg": "Nonce overflow: cannot increment further"
+    },
+    {
+      "code": 6019,
+      "name": "CpiDataMissing",
+      "msg": "CPI data is required but not provided"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientCpiAccounts",
+      "msg": "Insufficient remaining accounts for CPI instruction"
+    },
+    {
+      "code": 6021,
+      "name": "AccountSliceOutOfBounds",
+      "msg": "Account slice index out of bounds"
+    },
+    {
+      "code": 6022,
+      "name": "SolTransferInsufficientAccounts",
+      "msg": "SOL transfer requires at least 2 remaining accounts"
+    },
+    {
+      "code": 6023,
+      "name": "CpiDataInvalid",
+      "msg": "CPI data provided is invalid"
+    },
+    {
+      "code": 6024,
+      "name": "NewAuthenticatorMissing",
+      "msg": "New authenticator account is required but not provided"
+    },
+    {
+      "code": 6025,
+      "name": "NewAuthenticatorPasskeyMissing",
+      "msg": "New authenticator passkey is required but not provided"
+    },
+    {
+      "code": 6026,
+      "name": "InsufficientLamports",
+      "msg": "Insufficient lamports for requested transfer"
+    },
+    {
+      "code": 6027,
+      "name": "TransferAmountOverflow",
+      "msg": "Transfer amount would cause arithmetic overflow"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidBumpSeed",
+      "msg": "Invalid bump seed for PDA derivation"
+    },
+    {
+      "code": 6029,
+      "name": "InvalidAccountOwner",
+      "msg": "Account owner verification failed"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidAccountDiscriminator",
+      "msg": "Account discriminator mismatch"
     }
   ],
   "types": [
-    {
-      "name": "Action",
-      "docs": ["Enum for supported actions in the instruction"],
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ExecuteCpi"
-          },
-          {
-            "name": "ChangeProgramRule"
-          },
-          {
-            "name": "CheckAuthenticator"
-          },
-          {
-            "name": "CallRuleProgram"
-          }
-        ]
-      }
-    },
     {
       "name": "Config",
       "type": {
@@ -508,43 +693,27 @@
             "type": "u64"
           },
           {
-            "name": "default_rule_program",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "CpiData",
-      "docs": ["Data for a CPI call (instruction data and account slice)"],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "data",
-            "type": "bytes"
-          },
-          {
-            "name": "start_index",
-            "type": "u8"
-          },
-          {
-            "name": "length",
-            "type": "u8"
+            "name": "execute_instruction_fee",
+            "type": "u64"
           }
         ]
       }
     },
     {
       "name": "ExecuteInstructionArgs",
-      "docs": ["Arguments for the execute_instruction entrypoint"],
+      "docs": [
+        "Arguments for the execute_instruction entrypoint"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "passkey_pubkey",
             "type": {
-              "array": ["u8", 33]
+              "array": [
+                "u8",
+                33
+              ]
             }
           },
           {
@@ -562,70 +731,49 @@
           {
             "name": "verify_instruction_index",
             "type": "u8"
-          },
-          {
-            "name": "rule_data",
-            "type": {
-              "defined": {
-                "name": "CpiData"
-              }
-            }
-          },
-          {
-            "name": "cpi_data",
-            "type": {
-              "option": {
-                "defined": {
-                  "name": "CpiData"
-                }
-              }
-            }
-          },
-          {
-            "name": "action",
-            "type": {
-              "defined": {
-                "name": "Action"
-              }
-            }
-          },
-          {
-            "name": "create_new_authenticator",
-            "type": {
-              "option": {
-                "array": ["u8", 33]
-              }
-            }
           }
         ]
       }
     },
     {
       "name": "SmartWalletAuthenticator",
-      "docs": ["Account that stores authentication data for a smart wallet"],
+      "docs": [
+        "Account that stores authentication data for a smart wallet"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "passkey_pubkey",
-            "docs": ["The public key of the passkey that can authorize transactions"],
+            "docs": [
+              "The public key of the passkey that can authorize transactions"
+            ],
             "type": {
-              "array": ["u8", 33]
+              "array": [
+                "u8",
+                33
+              ]
             }
           },
           {
             "name": "smart_wallet",
-            "docs": ["The smart wallet this authenticator belongs to"],
+            "docs": [
+              "The smart wallet this authenticator belongs to"
+            ],
             "type": "pubkey"
           },
           {
             "name": "credential_id",
-            "docs": ["The credential ID this authenticator belongs to"],
+            "docs": [
+              "The credential ID this authenticator belongs to"
+            ],
             "type": "bytes"
           },
           {
             "name": "bump",
-            "docs": ["Bump seed for PDA derivation"],
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
             "type": "u8"
           }
         ]
@@ -633,68 +781,40 @@
     },
     {
       "name": "SmartWalletConfig",
-      "docs": ["Data account for a smart wallet"],
+      "docs": [
+        "Data account for a smart wallet"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "id",
-            "docs": ["Unique identifier for this smart wallet"],
+            "docs": [
+              "Unique identifier for this smart wallet"
+            ],
             "type": "u64"
-          },
-          {
-            "name": "rule_program",
-            "docs": ["Optional rule program that governs this wallet's operations"],
-            "type": "pubkey"
           },
           {
             "name": "last_nonce",
             "type": "u64"
-          },
-          {
-            "name": "bump",
-            "docs": ["Bump seed for PDA derivation"],
-            "type": "u8"
           }
         ]
       }
     },
     {
       "name": "SmartWalletSeq",
-      "docs": ["Account that maintains the sequence number for smart wallet creation"],
+      "docs": [
+        "Account that maintains the sequence number for smart wallet creation"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "seq",
-            "docs": ["Current sequence number, incremented for each new smart wallet"],
+            "docs": [
+              "Current sequence number, incremented for each new smart wallet"
+            ],
             "type": "u64"
-          },
-          {
-            "name": "bump",
-            "docs": ["Bump seed for PDA derivation"],
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "WhitelistRulePrograms",
-      "docs": ["Account that stores whitelisted rule program addresses"],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "list",
-            "docs": ["List of whitelisted program addresses"],
-            "type": {
-              "vec": "pubkey"
-            }
-          },
-          {
-            "name": "bump",
-            "docs": ["Bump seed for PDA derivation"],
-            "type": "u8"
           }
         ]
       }

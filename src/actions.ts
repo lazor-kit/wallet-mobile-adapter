@@ -21,7 +21,7 @@ import { LazorKitProgram } from './anchor/interface/lazorkit';
 
 /**
  * Connects to the wallet
- * 
+ *
  * @param get - Zustand state getter function
  * @param set - Zustand state setter function
  * @param options - Connection options with callbacks
@@ -60,7 +60,7 @@ export const connectAction = async (
       (isLoading) => set({ isLoading }),
       config
     );
-    
+
     const savedWallet = await saveWallet(walletInfo);
     set({ wallet: savedWallet });
     logger.log('Wallet connected successfully', { smartWallet: savedWallet.smartWallet });
@@ -77,7 +77,7 @@ export const connectAction = async (
 
 /**
  * Disconnects from the wallet
- * 
+ *
  * @param set - Zustand state setter function
  */
 export const disconnectAction = async (set: (state: Partial<WalletState>) => void) => {
@@ -98,7 +98,7 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
 
 /**
  * Signs a message through smart wallet
- * 
+ *
  * @param get - Zustand state getter function
  * @param set - Zustand state setter function
  * @param txnIns - Transaction instruction to execute
@@ -133,13 +133,13 @@ export const signMessageAction = async (
   set({ isSigning: true, error: null });
 
   try {
-    logger.log('Starting sign message flow', { 
+    logger.log('Starting sign message flow', {
       smartWallet: wallet.smartWallet,
-      instruction: txnIns.programId.toString()
+      instruction: txnIns.programId.toString(),
     });
 
     const lazorProgram = new LazorKitProgram(connection);
-    const message = await lazorProgram.getMessage(wallet.smartWallet);
+    const message = await lazorProgram.getMessage(wallet.smartWallet, txnIns.data);
 
     const encodedChallenge = Buffer.from(message)
       .toString('base64')
@@ -184,10 +184,10 @@ export const signMessageAction = async (
       }
     );
   } catch (error: unknown) {
-    logger.error('Sign message action failed:', error, { 
+    logger.error('Sign message action failed:', error, {
       smartWallet: wallet?.smartWallet,
       instruction: txnIns.programId.toString(),
-      redirectUrl: options.redirectUrl
+      redirectUrl: options.redirectUrl,
     });
     const err = error instanceof Error ? error : new Error('Unknown error');
     set({ error: err });
@@ -195,4 +195,4 @@ export const signMessageAction = async (
   } finally {
     set({ isSigning: false });
   }
-}; 
+};

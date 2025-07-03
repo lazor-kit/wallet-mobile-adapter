@@ -4,18 +4,21 @@
   <img src="https://img.shields.io/badge/React%20Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white" alt="Solana" />
+  <img src="https://img.shields.io/badge/WebAuthn-000000?style=for-the-badge&logo=webauthn&logoColor=white" alt="WebAuthn" />
 </p>
 
-A React Native SDK for integrating LazorKit smart wallets with WebAuthn passkey authentication. Provides secure, gasless wallet functionality with zero seed phrase management.
+A React Native SDK for integrating LazorKit smart wallets with WebAuthn passkey authentication. Provides secure, gasless wallet functionality with zero seed phrase management through browser-based authentication flows.
 
 ## Features
 
-- **WebAuthn Authentication** - Secure biometric authentication (Face ID, Touch ID, fingerprint)
+- **WebAuthn Authentication** - Secure biometric authentication (Face ID, Touch ID, fingerprint) via browser
 - **Smart Contract Wallets** - Account abstraction on Solana with enhanced security
 - **Gasless Transactions** - Fee sponsorship through integrated paymaster service
+- **Browser-Based Flows** - Seamless authentication and signing through in-app browser
 - **Auto-Persistence** - Automatic wallet state management with AsyncStorage
 - **TypeScript Support** - Complete type safety with comprehensive error handling
 - **Debug Mode** - Configurable logging for development and production
+- **Zustand Store** - Lightweight state management with React hooks
 
 ## Installation
 
@@ -38,8 +41,7 @@ export default function App() {
       rpcUrl="https://api.devnet.solana.com"
       ipfsUrl="https://portal.lazor.sh"
       paymasterUrl="https://lazorkit-paymaster.onrender.com"
-      isDebug={true}
-    >
+      isDebug={true}>
       <WalletScreen />
     </LazorKitWalletProvider>
   );
@@ -80,11 +82,12 @@ function WalletScreen() {
     });
 
     try {
-      await signMessage(instruction, {
+      const signature = await signMessage(instruction, {
         redirectUrl: 'yourapp://sign',
         onSuccess: (signature) => console.log('Transaction:', signature),
         onFail: (error) => console.error('Failed:', error.message),
       });
+      console.log('Transaction completed:', signature);
     } catch (error) {
       console.error('Sign error:', error);
     }
@@ -93,19 +96,19 @@ function WalletScreen() {
   return (
     <View style={{ padding: 20 }}>
       {error && <Text style={{ color: 'red' }}>Error: {error.message}</Text>}
-      
+
       {!isConnected ? (
-        <Button 
-          title={isConnecting ? "Connecting..." : "Connect Wallet"} 
+        <Button
+          title={isConnecting ? 'Connecting...' : 'Connect Wallet'}
           onPress={handleConnect}
           disabled={isConnecting}
         />
       ) : (
         <View>
           <Text>Wallet: {smartWalletPubkey?.toString()}</Text>
-          <Button 
-            title={isSigning ? "Signing..." : "Send Transaction"} 
-            onPress={handleTransaction} 
+          <Button
+            title={isSigning ? 'Signing...' : 'Send Transaction'}
+            onPress={handleTransaction}
             disabled={isSigning}
           />
           <Button title="Disconnect" onPress={disconnect} />
@@ -120,12 +123,12 @@ function WalletScreen() {
 
 ### Provider Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `rpcUrl` | `string?` | `devnet` | Solana RPC endpoint |
-| `ipfsUrl` | `string?` | `portal.lazor.sh` | LazorKit portal URL |
-| `paymasterUrl` | `string?` | `paymaster URL` | Fee sponsorship service |
-| `isDebug` | `boolean?` | `false` | Enable debug logging |
+| Prop           | Type       | Default                                   | Description             |
+| -------------- | ---------- | ----------------------------------------- | ----------------------- |
+| `rpcUrl`       | `string?`  | `https://api.devnet.solana.com`           | Solana RPC endpoint     |
+| `ipfsUrl`      | `string?`  | `https://portal.lazor.sh`                 | LazorKit portal URL     |
+| `paymasterUrl` | `string?`  | `https://lazorkit-paymaster.onrender.com` | Fee sponsorship service |
+| `isDebug`      | `boolean?` | `false`                                   | Enable debug logging    |
 
 ### Debug Mode
 
@@ -155,12 +158,12 @@ interface LazorWalletHook {
   isSigning: boolean;
   error: Error | null;
   connection: anchor.web3.Connection;
-  
-  // Actions  
+
+  // Actions
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: (options?: DisconnectOptions) => Promise<void>;
   signMessage: (
-    instruction: anchor.web3.TransactionInstruction, 
+    instruction: anchor.web3.TransactionInstruction,
     options: SignOptions
   ) => Promise<string>;
 }
@@ -172,15 +175,20 @@ interface LazorWalletHook {
 interface WalletInfo {
   readonly credentialId: string;
   readonly passkeyPubkey: number[];
-  readonly smartWallet: string;
-  readonly smartWalletAuthenticator: string;
   readonly expo: string;
   readonly platform: string;
+  readonly smartWallet: string;
+  readonly smartWalletAuthenticator: string;
 }
 
 interface ConnectOptions {
   readonly redirectUrl: string;
   readonly onSuccess?: (wallet: WalletInfo) => void;
+  readonly onFail?: (error: Error) => void;
+}
+
+interface DisconnectOptions {
+  readonly onSuccess?: () => void;
   readonly onFail?: (error: Error) => void;
 }
 
@@ -194,10 +202,10 @@ interface SignOptions {
 ## Error Handling
 
 ```tsx
-import { 
-  LazorKitError, 
-  WalletConnectionError, 
-  SigningError 
+import {
+  LazorKitError,
+  WalletConnectionError,
+  SigningError,
 } from '@lazorkit/wallet-mobile-adapter';
 
 try {
@@ -215,15 +223,85 @@ try {
 
 ## How It Works
 
-1. **Connect**: User connects via WebAuthn biometric authentication in browser
-2. **Smart Wallet**: Creates or retrieves smart contract wallet on Solana
-3. **Sign**: Transactions are signed using device passkeys via browser
-4. **Execute**: Smart wallet executes transactions with paymaster fee sponsorship
+1. **Connect Flow**:
+
+   - Opens browser to LazorKit portal for WebAuthn authentication
+   - User authenticates with biometrics (Face ID, Touch ID, fingerprint)
+   - Browser redirects back to app with wallet credentials
+   - Smart wallet is created/retrieved on Solana
+
+2. **Sign Flow**:
+
+   - Transaction instruction is prepared
+   - Browser opens for WebAuthn signing
+   - User signs with biometrics
+   - Smart wallet executes transaction with paymaster fee sponsorship
+
+3. **State Management**:
+   - Zustand store manages wallet state
+   - AsyncStorage persists wallet data
+   - React hooks provide clean interface
+
+## Advanced Usage
+
+### Direct Store Access
+
+```tsx
+import { useWalletStore } from '@lazorkit/wallet-mobile-adapter';
+
+function AdvancedComponent() {
+  const { wallet, config, setConfig } = useWalletStore();
+
+  // Direct access to store state and actions
+  return <div>...</div>;
+}
+```
+
+### Custom Actions
+
+```tsx
+import {
+  connectAction,
+  disconnectAction,
+  signMessageAction,
+} from '@lazorkit/wallet-mobile-adapter';
+
+// Use actions directly with store getter/setter
+const handleCustomConnect = async () => {
+  const get = () => useWalletStore.getState();
+  const set = (state: Partial<WalletState>) => useWalletStore.setState(state);
+
+  await connectAction(get, set, {
+    redirectUrl: 'yourapp://custom',
+    onSuccess: (wallet) => console.log('Custom connect:', wallet),
+  });
+};
+```
+
+### Utility Functions
+
+```tsx
+import {
+  logger,
+  handleAuthRedirect,
+  openBrowser,
+  getFeePayer,
+} from '@lazorkit/wallet-mobile-adapter';
+
+// Custom browser handling
+const customBrowser = async (url: string) => {
+  logger.info('Opening custom browser', { url });
+  return await openBrowser(url, 'yourapp://custom');
+};
+
+// Get fee payer from paymaster
+const feePayer = await getFeePayer('https://paymaster.example.com');
+```
 
 ## Platform Support
 
 - **iOS**: 14+ with Face ID/Touch ID
-- **Android**: 7+ with biometric authentication  
+- **Android**: 7+ with biometric authentication
 - **React Native**: 0.60+
 - **Expo**: SDK 45+ (managed workflow)
 
@@ -232,17 +310,25 @@ try {
 ### Common Issues
 
 **AsyncStorage Error:**
+
 ```bash
 npm install @react-native-async-storage/async-storage
 cd ios && pod install  # iOS only
 ```
 
 **Buffer Polyfills:**
+
 ```tsx
 // Add to your index.js or App.tsx
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
 global.Buffer = Buffer;
+```
+
+**Browser Dependencies:**
+
+```bash
+npm install expo-web-browser
 ```
 
 ### Debug Storage
@@ -256,6 +342,20 @@ console.log('Stored data:', JSON.parse(data || '{}'));
 
 // Clear data (development only)
 await AsyncStorage.removeItem('lazor-wallet-store');
+```
+
+### Debug Logging
+
+```tsx
+import { logger } from '@lazorkit/wallet-mobile-adapter';
+
+// Enable debug mode
+logger.setDebugMode(true);
+
+// Custom logging
+logger.info('Custom info message');
+logger.warn('Custom warning');
+logger.error('Custom error');
 ```
 
 ## License

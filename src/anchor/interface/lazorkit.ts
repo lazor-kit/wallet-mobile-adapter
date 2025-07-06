@@ -255,10 +255,10 @@ export class LazorKitProgram {
 
     // Manually serialize the message struct:
     // - nonce (u64): 8 bytes
-    // - current_slot (i64): 8 bytes
+    // - current_timestamp (i64): 8 bytes (unix seconds)
     // - instruction_data (Vec<u8>): 4 bytes length + data bytes
 
-    const currentSlot = await this.connection.getSlot();
+    const currentTimestamp = Math.floor(Date.now() / 1000);
     const instructionDataLength = instructionData.length;
 
     // Calculate total buffer size: 8 + 8 + 4 + instructionDataLength
@@ -267,8 +267,8 @@ export class LazorKitProgram {
     // Write nonce as little-endian u64 (bytes 0-7)
     buffer.writeBigUInt64LE(BigInt(smartWalletData.lastNonce.toString()), 0);
 
-    // Write current_slot as little-endian i64 (bytes 8-15)
-    buffer.writeBigInt64LE(BigInt(currentSlot), 8);
+    // Write current_timestamp as little-endian i64 (bytes 8-15)
+    buffer.writeBigInt64LE(BigInt(currentTimestamp), 8);
 
     // Write instruction_data length as little-endian u32 (bytes 16-19)
     buffer.writeUInt32LE(instructionDataLength, 16);

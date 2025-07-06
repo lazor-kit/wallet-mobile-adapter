@@ -381,7 +381,7 @@ export type Lazorkit = {
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "cpiProgram",
+          "name": "cpiProgram"
         }
       ],
       "args": [
@@ -604,81 +604,71 @@ export type Lazorkit = {
     },
     {
       "code": 6015,
-      "name": "slotTooOld",
-      "msg": "Message slot is too far in the past"
-    },
-    {
-      "code": 6016,
-      "name": "slotTooNew",
-      "msg": "Message slot is too far in the future"
-    },
-    {
-      "code": 6017,
       "name": "nonceMismatch",
       "msg": "Nonce mismatch: expected different value"
     },
     {
-      "code": 6018,
+      "code": 6016,
       "name": "nonceOverflow",
       "msg": "Nonce overflow: cannot increment further"
     },
     {
-      "code": 6019,
+      "code": 6017,
       "name": "cpiDataMissing",
       "msg": "CPI data is required but not provided"
     },
     {
-      "code": 6020,
+      "code": 6018,
       "name": "insufficientCpiAccounts",
       "msg": "Insufficient remaining accounts for CPI instruction"
     },
     {
-      "code": 6021,
+      "code": 6019,
       "name": "accountSliceOutOfBounds",
       "msg": "Account slice index out of bounds"
     },
     {
-      "code": 6022,
+      "code": 6020,
       "name": "solTransferInsufficientAccounts",
       "msg": "SOL transfer requires at least 2 remaining accounts"
     },
     {
-      "code": 6023,
+      "code": 6021,
       "name": "cpiDataInvalid",
       "msg": "CPI data provided is invalid"
     },
     {
-      "code": 6024,
+      "code": 6022,
       "name": "newAuthenticatorMissing",
       "msg": "New authenticator account is required but not provided"
     },
     {
-      "code": 6025,
+      "code": 6023,
       "name": "newAuthenticatorPasskeyMissing",
       "msg": "New authenticator passkey is required but not provided"
     },
     {
-      "code": 6026,
+      "code": 6024,
       "name": "insufficientLamports",
       "msg": "Insufficient lamports for requested transfer"
     },
     {
-      "code": 6027,
+      "code": 6025,
       "name": "transferAmountOverflow",
       "msg": "Transfer amount would cause arithmetic overflow"
     },
     {
-      "code": 6028,
+      "code": 6026,
       "name": "invalidBumpSeed",
       "msg": "Invalid bump seed for PDA derivation"
     },
     {
-      "code": 6029,
+      "code": 6027,
       "name": "invalidAccountOwner",
       "msg": "Account owner verification failed"
     },
     {
-      "code": 6030,
+      "code": 6028,
       "name": "invalidAccountDiscriminator",
       "msg": "Account discriminator mismatch"
     }

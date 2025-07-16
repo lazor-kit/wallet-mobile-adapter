@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/lazorkit.json`.
  */
 export type Lazorkit = {
-  "address": "9gJ7jZaAvUafgTFPoqkCwbuvC9kpZCPtHfHjMkQ66wu9",
+  "address": "HKAM6aGJsNuyxoVKNk8kgqMTUNSDjA3ciZUikHYemQzL",
   "metadata": {
     "name": "lazorkit",
     "version": "0.1.0",
@@ -16,6 +16,87 @@ export type Lazorkit = {
     "The Lazor Kit program provides smart wallet functionality with passkey authentication"
   ],
   "instructions": [
+    {
+      "name": "addWhitelistRuleProgram",
+      "docs": [
+        "Add a program to the whitelist of rule programs"
+      ],
+      "discriminator": [
+        133,
+        37,
+        74,
+        189,
+        59,
+        238,
+        188,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "whitelistRulePrograms",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116,
+                  95,
+                  114,
+                  117,
+                  108,
+                  101,
+                  95,
+                  112,
+                  114,
+                  111,
+                  103,
+                  114,
+                  97,
+                  109,
+                  115
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
     {
       "name": "createSmartWallet",
       "docs": [
@@ -67,10 +148,42 @@ export type Lazorkit = {
           }
         },
         {
+          "name": "whitelistRulePrograms",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116,
+                  95,
+                  114,
+                  117,
+                  108,
+                  101,
+                  95,
+                  112,
+                  114,
+                  111,
+                  103,
+                  114,
+                  97,
+                  109,
+                  115
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "smartWallet",
-          "docs": [
-            "It is initialized with 0 space because its data is stored in SmartWalletConfig."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -184,7 +297,6 @@ export type Lazorkit = {
         },
         {
           "name": "config",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -200,6 +312,9 @@ export type Lazorkit = {
               }
             ]
           }
+        },
+        {
+          "name": "defaultRuleProgram"
         },
         {
           "name": "systemProgram",
@@ -219,27 +334,32 @@ export type Lazorkit = {
         {
           "name": "credentialId",
           "type": "bytes"
+        },
+        {
+          "name": "ruleData",
+          "type": "bytes"
         }
       ]
     },
     {
-      "name": "executeInstruction",
+      "name": "execute",
       "docs": [
-        "Execute an instruction with passkey authentication"
+        "Unified execute entrypoint covering all smart-wallet actions"
       ],
       "discriminator": [
-        48,
-        18,
-        40,
-        40,
-        75,
-        74,
-        147,
-        110
+        130,
+        221,
+        242,
+        154,
+        13,
+        193,
+        189,
+        29
       ],
       "accounts": [
         {
           "name": "payer",
+          "writable": true,
           "signer": true
         },
         {
@@ -373,6 +493,44 @@ export type Lazorkit = {
           }
         },
         {
+          "name": "whitelistRulePrograms",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116,
+                  95,
+                  114,
+                  117,
+                  108,
+                  101,
+                  95,
+                  112,
+                  114,
+                  111,
+                  103,
+                  114,
+                  97,
+                  109,
+                  115
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authenticatorProgram"
+        },
+        {
           "name": "ixSysvar",
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
@@ -389,7 +547,7 @@ export type Lazorkit = {
           "name": "args",
           "type": {
             "defined": {
-              "name": "executeInstructionArgs"
+              "name": "executeArgs"
             }
           }
         }
@@ -413,11 +571,17 @@ export type Lazorkit = {
       "accounts": [
         {
           "name": "signer",
+          "docs": [
+            "The signer of the transaction, who will be the initial authority."
+          ],
           "writable": true,
           "signer": true
         },
         {
           "name": "config",
+          "docs": [
+            "The program's configuration account."
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -436,7 +600,49 @@ export type Lazorkit = {
           }
         },
         {
+          "name": "whitelistRulePrograms",
+          "docs": [
+            "The list of whitelisted rule programs that can be used with smart wallets."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116,
+                  95,
+                  114,
+                  117,
+                  108,
+                  101,
+                  95,
+                  112,
+                  114,
+                  111,
+                  103,
+                  114,
+                  97,
+                  109,
+                  115
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "smartWalletSeq",
+          "docs": [
+            "The sequence tracker for creating new smart wallets."
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -465,11 +671,85 @@ export type Lazorkit = {
           }
         },
         {
+          "name": "defaultRuleProgram",
+          "docs": [
+            "The default rule program to be used for new smart wallets."
+          ]
+        },
+        {
           "name": "systemProgram",
+          "docs": [
+            "The system program."
+          ],
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
+    },
+    {
+      "name": "updateConfig",
+      "docs": [
+        "Update the program configuration"
+      ],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "The current authority of the program."
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "docs": [
+            "The program's configuration account."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "param",
+          "type": {
+            "defined": {
+              "name": "updateConfigType"
+            }
+          }
+        },
+        {
+          "name": "value",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -523,6 +803,19 @@ export type Lazorkit = {
         49,
         195,
         84
+      ]
+    },
+    {
+      "name": "whitelistRulePrograms",
+      "discriminator": [
+        234,
+        147,
+        45,
+        188,
+        65,
+        212,
+        154,
+        241
       ]
     }
   ],
@@ -614,66 +907,146 @@ export type Lazorkit = {
     },
     {
       "code": 6017,
+      "name": "ruleProgramNotWhitelisted",
+      "msg": "Rule program not found in whitelist"
+    },
+    {
+      "code": 6018,
+      "name": "whitelistFull",
+      "msg": "The whitelist of rule programs is full."
+    },
+    {
+      "code": 6019,
+      "name": "invalidCheckRuleDiscriminator",
+      "msg": "Invalid instruction discriminator for check_rule"
+    },
+    {
+      "code": 6020,
+      "name": "invalidDestroyDiscriminator",
+      "msg": "Invalid instruction discriminator for destroy"
+    },
+    {
+      "code": 6021,
+      "name": "invalidInitRuleDiscriminator",
+      "msg": "Invalid instruction discriminator for init_rule"
+    },
+    {
+      "code": 6022,
+      "name": "ruleProgramsIdentical",
+      "msg": "Old and new rule programs are identical"
+    },
+    {
+      "code": 6023,
+      "name": "noDefaultRuleProgram",
+      "msg": "Neither old nor new rule program is the default"
+    },
+    {
+      "code": 6024,
+      "name": "invalidRemainingAccounts",
+      "msg": "Invalid remaining accounts"
+    },
+    {
+      "code": 6025,
       "name": "cpiDataMissing",
       "msg": "CPI data is required but not provided"
     },
     {
-      "code": 6018,
+      "code": 6026,
+      "name": "invalidCpiData",
+      "msg": "CPI data is invalid or malformed"
+    },
+    {
+      "code": 6027,
+      "name": "insufficientRuleAccounts",
+      "msg": "Insufficient remaining accounts for rule instruction"
+    },
+    {
+      "code": 6028,
       "name": "insufficientCpiAccounts",
       "msg": "Insufficient remaining accounts for CPI instruction"
     },
     {
-      "code": 6019,
+      "code": 6029,
       "name": "accountSliceOutOfBounds",
       "msg": "Account slice index out of bounds"
     },
     {
-      "code": 6020,
+      "code": 6030,
       "name": "solTransferInsufficientAccounts",
       "msg": "SOL transfer requires at least 2 remaining accounts"
     },
     {
-      "code": 6021,
-      "name": "cpiDataInvalid",
-      "msg": "CPI data provided is invalid"
-    },
-    {
-      "code": 6022,
+      "code": 6031,
       "name": "newAuthenticatorMissing",
       "msg": "New authenticator account is required but not provided"
     },
     {
-      "code": 6023,
+      "code": 6032,
       "name": "newAuthenticatorPasskeyMissing",
       "msg": "New authenticator passkey is required but not provided"
     },
     {
-      "code": 6024,
+      "code": 6033,
       "name": "insufficientLamports",
       "msg": "Insufficient lamports for requested transfer"
     },
     {
-      "code": 6025,
+      "code": 6034,
       "name": "transferAmountOverflow",
       "msg": "Transfer amount would cause arithmetic overflow"
     },
     {
-      "code": 6026,
+      "code": 6035,
       "name": "invalidBumpSeed",
       "msg": "Invalid bump seed for PDA derivation"
     },
     {
-      "code": 6027,
+      "code": 6036,
       "name": "invalidAccountOwner",
       "msg": "Account owner verification failed"
     },
     {
-      "code": 6028,
+      "code": 6037,
       "name": "invalidAccountDiscriminator",
       "msg": "Account discriminator mismatch"
+    },
+    {
+      "code": 6038,
+      "name": "invalidProgramId",
+      "msg": "Invalid program ID"
+    },
+    {
+      "code": 6039,
+      "name": "programNotExecutable",
+      "msg": "Program not executable"
+    },
+    {
+      "code": 6040,
+      "name": "smartWalletAuthenticatorAlreadyInitialized",
+      "msg": "Smart wallet authenticator already initialized"
     }
   ],
   "types": [
+    {
+      "name": "action",
+      "docs": [
+        "Supported wallet actions"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "executeTx"
+          },
+          {
+            "name": "updateRuleProgram"
+          },
+          {
+            "name": "callRuleProgram"
+          }
+        ]
+      }
+    },
     {
       "name": "config",
       "type": {
@@ -688,16 +1061,20 @@ export type Lazorkit = {
             "type": "u64"
           },
           {
-            "name": "executeInstructionFee",
+            "name": "executeFee",
             "type": "u64"
+          },
+          {
+            "name": "defaultRuleProgram",
+            "type": "pubkey"
           }
         ]
       }
     },
     {
-      "name": "executeInstructionArgs",
+      "name": "executeArgs",
       "docs": [
-        "Arguments for the execute_instruction entrypoint"
+        "Single args struct shared by all actions"
       ],
       "type": {
         "kind": "struct",
@@ -726,6 +1103,14 @@ export type Lazorkit = {
           {
             "name": "verifyInstructionIndex",
             "type": "u8"
+          },
+          {
+            "name": "action",
+            "type": {
+              "defined": {
+                "name": "action"
+              }
+            }
           }
         ]
       }
@@ -790,8 +1175,22 @@ export type Lazorkit = {
             "type": "u64"
           },
           {
+            "name": "ruleProgram",
+            "docs": [
+              "Optional rule program that governs this wallet's operations"
+            ],
+            "type": "pubkey"
+          },
+          {
             "name": "lastNonce",
             "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
+            "type": "u8"
           }
         ]
       }
@@ -810,6 +1209,60 @@ export type Lazorkit = {
               "Current sequence number, incremented for each new smart wallet"
             ],
             "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "updateConfigType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "createWalletFee"
+          },
+          {
+            "name": "executeFee"
+          },
+          {
+            "name": "defaultRuleProgram"
+          },
+          {
+            "name": "admin"
+          }
+        ]
+      }
+    },
+    {
+      "name": "whitelistRulePrograms",
+      "docs": [
+        "Account that stores whitelisted rule program addresses"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "list",
+            "docs": [
+              "List of whitelisted program addresses"
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
+            "type": "u8"
           }
         ]
       }

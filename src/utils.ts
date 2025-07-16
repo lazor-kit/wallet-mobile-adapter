@@ -385,7 +385,6 @@ export const createWalletActions = (
         Buffer.from(browserResult.signature, 'base64'),
         feePayer,
         new anchor.web3.PublicKey(data.smartWallet),
-        undefined, // ruleInstruction
         txnIns // cpiInstruction
       );
 

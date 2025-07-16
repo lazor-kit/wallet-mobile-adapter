@@ -107,6 +107,7 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
 export const signMessageAction = async (
   get: () => WalletState,
   set: (state: Partial<WalletState>) => void,
+  ruleIns: anchor.web3.TransactionInstruction | null = null,
   txnIns: anchor.web3.TransactionInstruction,
   options: SignOptions
 ) => {
@@ -139,7 +140,12 @@ export const signMessageAction = async (
     });
 
     const lazorProgram = new LazorKitProgram(connection);
-    const message = await lazorProgram.getMessage(wallet.smartWallet, txnIns.data);
+    const message = await lazorProgram.getMessage(
+      wallet.smartWallet,
+      ruleIns,
+      wallet.smartWalletAuthenticator,
+      txnIns
+    );
 
     const encodedChallenge = Buffer.from(message)
       .toString('base64')

@@ -1,6 +1,6 @@
 {
   "name": "@lazorkit/wallet-mobile-adapter",
-  "version": "1.2.76",
+  "version": "1.2.86",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",

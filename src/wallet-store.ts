@@ -228,8 +228,11 @@ export const useWalletStore = create<WalletState>()(
        * @param txnIns - Transaction instruction to execute
        * @param options - Signing options with callbacks and redirect URL
        */
-      signMessage: (txnIns: anchor.web3.TransactionInstruction, options: SignOptions) =>
-        signMessageAction(get, set, txnIns, options),
+      signMessage: (
+        txnIns: anchor.web3.TransactionInstruction,
+        options: SignOptions,
+        ruleIns: anchor.web3.TransactionInstruction | null = null
+      ) => signMessageAction(get, set, ruleIns, txnIns, options),
     }),
     {
       // ========================================================================

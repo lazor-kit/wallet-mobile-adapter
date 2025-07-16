@@ -12,6 +12,7 @@ if (typeof globalThis.structuredClone !== 'function') {
 }
 import { Buffer } from 'buffer';
 import { sha256 } from 'js-sha256';
+import { DefaultRuleProgram } from './default_rule';
 
 export class LazorKitProgram {
   /** Network connection used by all RPC / account queries */
@@ -28,8 +29,11 @@ export class LazorKitProgram {
   private _whitelistRulePrograms?: anchor.web3.PublicKey;
   private _config?: anchor.web3.PublicKey;
 
+  readonly defaultRuleProgram: DefaultRuleProgram;
+
   constructor(connection: anchor.web3.Connection) {
     this.connection = connection;
+    this.defaultRuleProgram = new DefaultRuleProgram(connection);
   }
 
   get program(): anchor.Program<Lazorkit> {
@@ -97,6 +101,16 @@ export class LazorKitProgram {
     )[0];
   }
 
+  get whitelistRulePrograms(): anchor.web3.PublicKey {
+    if (!this._whitelistRulePrograms) {
+      this._whitelistRulePrograms = anchor.web3.PublicKey.findProgramAddressSync(
+        [constants.WHITELIST_RULE_PROGRAMS_SEED],
+        this.programId
+      )[0];
+    }
+    return this._whitelistRulePrograms;
+  }
+
   get config(): anchor.web3.PublicKey {
     if (!this._config) {
       this._config = anchor.web3.PublicKey.findProgramAddressSync(
@@ -130,13 +144,21 @@ export class LazorKitProgram {
   async createSmartWalletTxn(
     passkeyPubkey: number[],
     payer: anchor.web3.PublicKey,
-    credentialId: string = ''
+    credentialId: string = '',
+    ruleIns: anchor.web3.TransactionInstruction | null = null
   ): Promise<anchor.web3.Transaction> {
     const smartWallet = await this.getLastestSmartWallet();
     const [smartWalletAuthenticator] = this.smartWalletAuthenticator(passkeyPubkey, smartWallet);
 
+    // If caller does not provide a rule instruction, default to initRule of DefaultRuleProgram
+    const ruleInstruction =
+      ruleIns ||
+      (await this.defaultRuleProgram.initRuleIns(payer, smartWallet, smartWalletAuthenticator));
+
+    const remainingAccounts = instructionToAccountMetas(ruleInstruction, payer);
+
     const createSmartWalletIx = await this.program.methods
-      .createSmartWallet(passkeyPubkey, Buffer.from(credentialId, 'base64'))
+      .createSmartWallet(passkeyPubkey, Buffer.from(credentialId, 'base64'), ruleInstruction.data)
       .accountsPartial({
         signer: payer,
         smartWalletSeq: this.smartWalletSeq,
@@ -145,7 +167,9 @@ export class LazorKitProgram {
         smartWalletAuthenticator,
         config: this.config,
         systemProgram: anchor.web3.SystemProgram.programId,
+        defaultRuleProgram: this.defaultRuleProgram.programId,
       })
+      .remainingAccounts(remainingAccounts)
       .instruction();
 
     const tx = new anchor.web3.Transaction().add(createSmartWalletIx);
@@ -161,14 +185,26 @@ export class LazorKitProgram {
     signature: Buffer,
     payer: anchor.web3.PublicKey,
     smartWallet: anchor.web3.PublicKey,
+    cpiIns: anchor.web3.TransactionInstruction | null = null,
     verifyInstructionIndex: number = 0,
-    cpiIns: anchor.web3.TransactionInstruction
+    ruleIns: anchor.web3.TransactionInstruction | null = null,
+    action: types.ExecuteActionType = types.ExecuteAction.ExecuteTx,
+    newPasskey: number[] | null = null
   ): Promise<anchor.web3.Transaction> {
     const [smartWalletAuthenticator] = this.smartWalletAuthenticator(passkeyPubkey, smartWallet);
 
-    let cpiData: types.CpiData | null = null;
+    const remainingAccounts: anchor.web3.AccountMeta[] = [];
 
-    const remainingAccounts: anchor.web3.AccountMeta[] = instructionToAccountMetas(cpiIns, payer);
+    const ruleInstruction =
+      ruleIns || (await this.defaultRuleProgram.checkRuleIns(smartWalletAuthenticator));
+
+    console.log(ruleInstruction);
+
+    remainingAccounts.push(...instructionToAccountMetas(ruleInstruction, payer));
+
+    if (cpiIns) {
+      remainingAccounts.push(...instructionToAccountMetas(cpiIns, payer));
+    }
 
     const message = Buffer.concat([
       authenticatorDataRaw,
@@ -182,12 +218,14 @@ export class LazorKitProgram {
     );
 
     const executeInstructionIx = await this.program.methods
-      .executeInstruction({
+      .execute({
         passkeyPubkey,
         signature,
         clientDataJsonRaw,
         authenticatorDataRaw,
         verifyInstructionIndex,
+        action,
+        // create_new_authenticator: passkeyPubkey,
       })
       .accountsPartial({
         payer,
@@ -195,9 +233,14 @@ export class LazorKitProgram {
         smartWallet,
         smartWalletConfig: this.smartWalletConfig(smartWallet),
         smartWalletAuthenticator,
+        whitelistRulePrograms: this.whitelistRulePrograms,
+        authenticatorProgram: ruleInstruction.programId,
         ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         systemProgram: anchor.web3.SystemProgram.programId,
-        cpiProgram: cpiIns.programId,
+        cpiProgram: cpiIns ? cpiIns.programId : anchor.web3.SystemProgram.programId,
+        // newSmartWalletAuthenticator: newPasskey
+        //   ? new anchor.web3.PublicKey(this.smartWalletAuthenticator(newPasskey, smartWallet)[0])
+        //   : anchor.web3.SystemProgram.programId,
       })
       .remainingAccounts(remainingAccounts)
       .instruction();
@@ -248,21 +291,32 @@ export class LazorKitProgram {
   /**
    * Build the serialized Message struct used for signing requests.
    */
-  async getMessage(smartWallet: string, instructionData: Buffer): Promise<Buffer> {
-    const smartWalletData = await this.getSmartWalletConfigData(
-      new anchor.web3.PublicKey(smartWallet)
-    );
+  async getMessage(
+    smartWalletString: string,
+    ruleIns: anchor.web3.TransactionInstruction | null = null,
+    smartWalletAuthenticatorString: string,
+    cpiInstruction: anchor.web3.TransactionInstruction
+  ): Promise<Buffer> {
+    const smartWallet = new anchor.web3.PublicKey(smartWalletString);
+    const smartWalletData = await this.getSmartWalletConfigData(smartWallet);
+
+    const ruleInstruction =
+      ruleIns ||
+      (await this.defaultRuleProgram.checkRuleIns(
+        new anchor.web3.PublicKey(smartWalletAuthenticatorString)
+      ));
 
     // Manually serialize the message struct:
     // - nonce (u64): 8 bytes
     // - current_timestamp (i64): 8 bytes (unix seconds)
-    // - instruction_data (Vec<u8>): 4 bytes length + data bytes
+    // - split_index (u16): 2 bytes
+    // - rule_data (Vec<u8>): 4 bytes length + data bytes
+    // - cpi_data (Vec<u8>): 4 bytes length + data bytes
 
     const currentTimestamp = Math.floor(Date.now() / 1000);
-    const instructionDataLength = instructionData.length;
 
-    // Calculate total buffer size: 8 + 8 + 4 + instructionDataLength
-    const buffer = Buffer.alloc(20 + instructionDataLength);
+    // Calculate total buffer size: 8 + 8 + 2 + 4 + instructionDataLength + 4 + instructionDataLength
+    const buffer = Buffer.alloc(26 + ruleInstruction.data.length + cpiInstruction.data.length);
 
     // Write nonce as little-endian u64 (bytes 0-7)
     buffer.writeBigUInt64LE(BigInt(smartWalletData.lastNonce.toString()), 0);
@@ -270,11 +324,20 @@ export class LazorKitProgram {
     // Write current_timestamp as little-endian i64 (bytes 8-15)
     buffer.writeBigInt64LE(BigInt(currentTimestamp), 8);
 
-    // Write instruction_data length as little-endian u32 (bytes 16-19)
-    buffer.writeUInt32LE(instructionDataLength, 16);
+    // Write split_index as little-endian u16 (bytes 16-17)
+    buffer.writeUInt16LE(ruleInstruction.keys.length, 16);
 
-    // Write instruction_data bytes (starting at byte 20)
-    instructionData.copy(buffer, 20);
+    // Write rule_data length as little-endian u32 (bytes 18-21)
+    buffer.writeUInt32LE(ruleInstruction.data.length, 18);
+
+    // Write rule_data bytes (starting at byte 22)
+    ruleInstruction.data.copy(buffer, 22);
+
+    // Write cpi_data length as little-endian u32 (bytes 26-29)
+    buffer.writeUInt32LE(cpiInstruction.data.length, 22 + ruleInstruction.data.length);
+
+    // Write cpi_data bytes (starting at byte 30)
+    cpiInstruction.data.copy(buffer, 26 + ruleInstruction.data.length);
 
     return buffer;
   }

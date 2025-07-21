@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/default_rule.json`.
  */
 export type DefaultRule = {
-  address: 'FcHpLspZz2U5JykpRmFBjaAsfJvPZsfKSBpegNBnjFbX';
+  address: 'CNT2aEgxucQjmt5SRsA6hSGrt241Bvc9zsgPvSuMjQTE';
   metadata: {
     name: 'defaultRule';
     version: '0.1.0';

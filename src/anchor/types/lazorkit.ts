@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/lazorkit.json`.
  */
 export type Lazorkit = {
-  "address": "HKAM6aGJsNuyxoVKNk8kgqMTUNSDjA3ciZUikHYemQzL",
+  "address": "J6Big9w1VNeRZgDWH5qmNz2Nd6XFq5QeZbqC8caqSE5W",
   "metadata": {
     "name": "lazorkit",
     "version": "0.1.0",
@@ -119,36 +119,10 @@ export type Lazorkit = {
           "signer": true
         },
         {
-          "name": "smartWalletSeq",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  115,
-                  101,
-                  113
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "whitelistRulePrograms",
+          "docs": [
+            "Whitelist of allowed rule programs"
+          ],
           "pda": {
             "seeds": [
               {
@@ -184,6 +158,9 @@ export type Lazorkit = {
         },
         {
           "name": "smartWallet",
+          "docs": [
+            "The smart wallet PDA being created with random ID"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -205,15 +182,17 @@ export type Lazorkit = {
                 ]
               },
               {
-                "kind": "account",
-                "path": "smart_wallet_seq.seq",
-                "account": "smartWalletSeq"
+                "kind": "arg",
+                "path": "walletId"
               }
             ]
           }
         },
         {
           "name": "smartWalletConfig",
+          "docs": [
+            "Smart wallet configuration data"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -250,6 +229,9 @@ export type Lazorkit = {
         },
         {
           "name": "smartWalletAuthenticator",
+          "docs": [
+            "Smart wallet authenticator for the passkey"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -297,6 +279,9 @@ export type Lazorkit = {
         },
         {
           "name": "config",
+          "docs": [
+            "Program configuration"
+          ],
           "pda": {
             "seeds": [
               {
@@ -314,7 +299,10 @@ export type Lazorkit = {
           }
         },
         {
-          "name": "defaultRuleProgram"
+          "name": "defaultRuleProgram",
+          "docs": [
+            "Default rule program for the smart wallet"
+          ]
         },
         {
           "name": "systemProgram",
@@ -338,6 +326,10 @@ export type Lazorkit = {
         {
           "name": "ruleData",
           "type": "bytes"
+        },
+        {
+          "name": "walletId",
+          "type": "u64"
         }
       ]
     },
@@ -540,6 +532,15 @@ export type Lazorkit = {
         },
         {
           "name": "cpiProgram"
+        },
+        {
+          "name": "newSmartWalletAuthenticator",
+          "docs": [
+            "The new authenticator is an optional account that is only initialized",
+            "by the `CallRuleProgram` action. It is passed as an UncheckedAccount",
+            "and created via CPI if needed."
+          ],
+          "optional": true
         }
       ],
       "args": [
@@ -633,38 +634,6 @@ export type Lazorkit = {
                   97,
                   109,
                   115
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "smartWalletSeq",
-          "docs": [
-            "The sequence tracker for creating new smart wallets."
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  109,
-                  97,
-                  114,
-                  116,
-                  95,
-                  119,
-                  97,
-                  108,
-                  108,
-                  101,
-                  116,
-                  95,
-                  115,
-                  101,
-                  113
                 ]
               }
             ]
@@ -793,19 +762,6 @@ export type Lazorkit = {
       ]
     },
     {
-      "name": "smartWalletSeq",
-      "discriminator": [
-        12,
-        192,
-        82,
-        50,
-        253,
-        49,
-        195,
-        84
-      ]
-    },
-    {
       "name": "whitelistRulePrograms",
       "discriminator": [
         234,
@@ -816,6 +772,164 @@ export type Lazorkit = {
         212,
         154,
         241
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "authenticatorAdded",
+      "discriminator": [
+        213,
+        87,
+        171,
+        174,
+        101,
+        129,
+        32,
+        44
+      ]
+    },
+    {
+      "name": "configUpdated",
+      "discriminator": [
+        40,
+        241,
+        230,
+        122,
+        11,
+        19,
+        198,
+        194
+      ]
+    },
+    {
+      "name": "errorEvent",
+      "discriminator": [
+        163,
+        35,
+        212,
+        206,
+        66,
+        104,
+        234,
+        251
+      ]
+    },
+    {
+      "name": "feeCollected",
+      "discriminator": [
+        12,
+        28,
+        17,
+        248,
+        244,
+        36,
+        8,
+        73
+      ]
+    },
+    {
+      "name": "programInitialized",
+      "discriminator": [
+        43,
+        70,
+        110,
+        241,
+        199,
+        218,
+        221,
+        245
+      ]
+    },
+    {
+      "name": "programPausedStateChanged",
+      "discriminator": [
+        148,
+        9,
+        117,
+        157,
+        18,
+        25,
+        122,
+        32
+      ]
+    },
+    {
+      "name": "ruleProgramChanged",
+      "discriminator": [
+        116,
+        110,
+        184,
+        140,
+        118,
+        243,
+        237,
+        111
+      ]
+    },
+    {
+      "name": "securityEvent",
+      "discriminator": [
+        16,
+        175,
+        241,
+        170,
+        85,
+        9,
+        201,
+        100
+      ]
+    },
+    {
+      "name": "smartWalletCreated",
+      "discriminator": [
+        145,
+        37,
+        118,
+        21,
+        58,
+        251,
+        56,
+        128
+      ]
+    },
+    {
+      "name": "solTransfer",
+      "discriminator": [
+        0,
+        186,
+        79,
+        129,
+        194,
+        76,
+        94,
+        9
+      ]
+    },
+    {
+      "name": "transactionExecuted",
+      "discriminator": [
+        211,
+        227,
+        168,
+        14,
+        32,
+        111,
+        189,
+        210
+      ]
+    },
+    {
+      "name": "whitelistRuleProgramAdded",
+      "discriminator": [
+        219,
+        72,
+        34,
+        198,
+        65,
+        224,
+        225,
+        103
       ]
     }
   ],
@@ -917,113 +1031,383 @@ export type Lazorkit = {
     },
     {
       "code": 6019,
+      "name": "ruleDataRequired",
+      "msg": "Rule data is required but not provided"
+    },
+    {
+      "code": 6020,
       "name": "invalidCheckRuleDiscriminator",
       "msg": "Invalid instruction discriminator for check_rule"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "invalidDestroyDiscriminator",
       "msg": "Invalid instruction discriminator for destroy"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "invalidInitRuleDiscriminator",
       "msg": "Invalid instruction discriminator for init_rule"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "ruleProgramsIdentical",
       "msg": "Old and new rule programs are identical"
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "noDefaultRuleProgram",
       "msg": "Neither old nor new rule program is the default"
     },
     {
-      "code": 6024,
+      "code": 6025,
       "name": "invalidRemainingAccounts",
       "msg": "Invalid remaining accounts"
     },
     {
-      "code": 6025,
+      "code": 6026,
       "name": "cpiDataMissing",
       "msg": "CPI data is required but not provided"
     },
     {
-      "code": 6026,
+      "code": 6027,
       "name": "invalidCpiData",
       "msg": "CPI data is invalid or malformed"
     },
     {
-      "code": 6027,
+      "code": 6028,
       "name": "insufficientRuleAccounts",
       "msg": "Insufficient remaining accounts for rule instruction"
     },
     {
-      "code": 6028,
+      "code": 6029,
       "name": "insufficientCpiAccounts",
       "msg": "Insufficient remaining accounts for CPI instruction"
     },
     {
-      "code": 6029,
+      "code": 6030,
       "name": "accountSliceOutOfBounds",
       "msg": "Account slice index out of bounds"
     },
     {
-      "code": 6030,
+      "code": 6031,
       "name": "solTransferInsufficientAccounts",
       "msg": "SOL transfer requires at least 2 remaining accounts"
     },
     {
-      "code": 6031,
+      "code": 6032,
       "name": "newAuthenticatorMissing",
       "msg": "New authenticator account is required but not provided"
     },
     {
-      "code": 6032,
+      "code": 6033,
       "name": "newAuthenticatorPasskeyMissing",
       "msg": "New authenticator passkey is required but not provided"
     },
     {
-      "code": 6033,
+      "code": 6034,
       "name": "insufficientLamports",
       "msg": "Insufficient lamports for requested transfer"
     },
     {
-      "code": 6034,
+      "code": 6035,
       "name": "transferAmountOverflow",
       "msg": "Transfer amount would cause arithmetic overflow"
     },
     {
-      "code": 6035,
+      "code": 6036,
       "name": "invalidBumpSeed",
       "msg": "Invalid bump seed for PDA derivation"
     },
     {
-      "code": 6036,
+      "code": 6037,
       "name": "invalidAccountOwner",
       "msg": "Account owner verification failed"
     },
     {
-      "code": 6037,
+      "code": 6038,
       "name": "invalidAccountDiscriminator",
       "msg": "Account discriminator mismatch"
     },
     {
-      "code": 6038,
+      "code": 6039,
       "name": "invalidProgramId",
       "msg": "Invalid program ID"
     },
     {
-      "code": 6039,
+      "code": 6040,
       "name": "programNotExecutable",
       "msg": "Program not executable"
     },
     {
-      "code": 6040,
+      "code": 6041,
       "name": "smartWalletAuthenticatorAlreadyInitialized",
       "msg": "Smart wallet authenticator already initialized"
+    },
+    {
+      "code": 6042,
+      "name": "credentialIdTooLarge",
+      "msg": "Credential ID exceeds maximum allowed size"
+    },
+    {
+      "code": 6043,
+      "name": "credentialIdEmpty",
+      "msg": "Credential ID cannot be empty"
+    },
+    {
+      "code": 6044,
+      "name": "ruleDataTooLarge",
+      "msg": "Rule data exceeds maximum allowed size"
+    },
+    {
+      "code": 6045,
+      "name": "cpiDataTooLarge",
+      "msg": "CPI data exceeds maximum allowed size"
+    },
+    {
+      "code": 6046,
+      "name": "tooManyRemainingAccounts",
+      "msg": "Too many remaining accounts provided"
+    },
+    {
+      "code": 6047,
+      "name": "invalidPdaDerivation",
+      "msg": "Invalid PDA derivation"
+    },
+    {
+      "code": 6048,
+      "name": "transactionTooOld",
+      "msg": "Transaction is too old"
+    },
+    {
+      "code": 6049,
+      "name": "rateLimitExceeded",
+      "msg": "Rate limit exceeded"
+    },
+    {
+      "code": 6050,
+      "name": "invalidAccountData",
+      "msg": "Invalid account data"
+    },
+    {
+      "code": 6051,
+      "name": "unauthorized",
+      "msg": "Unauthorized access attempt"
+    },
+    {
+      "code": 6052,
+      "name": "programPaused",
+      "msg": "Program is paused"
+    },
+    {
+      "code": 6053,
+      "name": "invalidInstructionData",
+      "msg": "Invalid instruction data"
+    },
+    {
+      "code": 6054,
+      "name": "accountAlreadyInitialized",
+      "msg": "Account already initialized"
+    },
+    {
+      "code": 6055,
+      "name": "accountNotInitialized",
+      "msg": "Account not initialized"
+    },
+    {
+      "code": 6056,
+      "name": "invalidAccountState",
+      "msg": "Invalid account state"
+    },
+    {
+      "code": 6057,
+      "name": "integerOverflow",
+      "msg": "Operation would cause integer overflow"
+    },
+    {
+      "code": 6058,
+      "name": "integerUnderflow",
+      "msg": "Operation would cause integer underflow"
+    },
+    {
+      "code": 6059,
+      "name": "invalidFeeAmount",
+      "msg": "Invalid fee amount"
+    },
+    {
+      "code": 6060,
+      "name": "insufficientBalanceForFee",
+      "msg": "Insufficient balance for fee"
+    },
+    {
+      "code": 6061,
+      "name": "invalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 6062,
+      "name": "authorityMismatch",
+      "msg": "Authority mismatch"
+    },
+    {
+      "code": 6063,
+      "name": "invalidSequenceNumber",
+      "msg": "Invalid sequence number"
+    },
+    {
+      "code": 6064,
+      "name": "duplicateTransaction",
+      "msg": "Duplicate transaction detected"
+    },
+    {
+      "code": 6065,
+      "name": "invalidTransactionOrdering",
+      "msg": "Invalid transaction ordering"
+    },
+    {
+      "code": 6066,
+      "name": "maxWalletLimitReached",
+      "msg": "Maximum wallet limit reached"
+    },
+    {
+      "code": 6067,
+      "name": "invalidWalletConfiguration",
+      "msg": "Invalid wallet configuration"
+    },
+    {
+      "code": 6068,
+      "name": "walletNotFound",
+      "msg": "Wallet not found"
+    },
+    {
+      "code": 6069,
+      "name": "invalidPasskeyFormat",
+      "msg": "Invalid passkey format"
+    },
+    {
+      "code": 6070,
+      "name": "passkeyAlreadyRegistered",
+      "msg": "Passkey already registered"
+    },
+    {
+      "code": 6071,
+      "name": "invalidMessageFormat",
+      "msg": "Invalid message format"
+    },
+    {
+      "code": 6072,
+      "name": "messageSizeExceedsLimit",
+      "msg": "Message size exceeds limit"
+    },
+    {
+      "code": 6073,
+      "name": "invalidActionType",
+      "msg": "Invalid action type"
+    },
+    {
+      "code": 6074,
+      "name": "actionNotSupported",
+      "msg": "Action not supported"
+    },
+    {
+      "code": 6075,
+      "name": "invalidSplitIndex",
+      "msg": "Invalid split index"
+    },
+    {
+      "code": 6076,
+      "name": "cpiExecutionFailed",
+      "msg": "CPI execution failed"
+    },
+    {
+      "code": 6077,
+      "name": "invalidProgramAddress",
+      "msg": "Invalid program address"
+    },
+    {
+      "code": 6078,
+      "name": "whitelistOperationFailed",
+      "msg": "Whitelist operation failed"
+    },
+    {
+      "code": 6079,
+      "name": "invalidWhitelistState",
+      "msg": "Invalid whitelist state"
+    },
+    {
+      "code": 6080,
+      "name": "emergencyShutdown",
+      "msg": "Emergency shutdown activated"
+    },
+    {
+      "code": 6081,
+      "name": "recoveryModeRequired",
+      "msg": "Recovery mode required"
+    },
+    {
+      "code": 6082,
+      "name": "invalidRecoveryAttempt",
+      "msg": "Invalid recovery attempt"
+    },
+    {
+      "code": 6083,
+      "name": "auditLogFull",
+      "msg": "Audit log full"
+    },
+    {
+      "code": 6084,
+      "name": "invalidAuditEntry",
+      "msg": "Invalid audit entry"
+    },
+    {
+      "code": 6085,
+      "name": "reentrancyDetected",
+      "msg": "Reentrancy detected"
+    },
+    {
+      "code": 6086,
+      "name": "invalidCallDepth",
+      "msg": "Invalid call depth"
+    },
+    {
+      "code": 6087,
+      "name": "stackOverflowProtection",
+      "msg": "Stack overflow protection triggered"
+    },
+    {
+      "code": 6088,
+      "name": "memoryLimitExceeded",
+      "msg": "Memory limit exceeded"
+    },
+    {
+      "code": 6089,
+      "name": "computationLimitExceeded",
+      "msg": "Computation limit exceeded"
+    },
+    {
+      "code": 6090,
+      "name": "invalidRentExemption",
+      "msg": "Invalid rent exemption"
+    },
+    {
+      "code": 6091,
+      "name": "accountClosureFailed",
+      "msg": "Account closure failed"
+    },
+    {
+      "code": 6092,
+      "name": "invalidAccountClosure",
+      "msg": "Invalid account closure"
+    },
+    {
+      "code": 6093,
+      "name": "refundFailed",
+      "msg": "Refund failed"
+    },
+    {
+      "code": 6094,
+      "name": "invalidRefundAmount",
+      "msg": "Invalid refund amount"
     }
   ],
   "types": [
@@ -1039,10 +1423,46 @@ export type Lazorkit = {
             "name": "executeTx"
           },
           {
-            "name": "updateRuleProgram"
+            "name": "changeRuleProgram"
           },
           {
             "name": "callRuleProgram"
+          }
+        ]
+      }
+    },
+    {
+      "name": "authenticatorAdded",
+      "docs": [
+        "Event emitted when a new authenticator is added"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "newAuthenticator",
+            "type": "pubkey"
+          },
+          {
+            "name": "passkeyHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "addedBy",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -1067,6 +1487,74 @@ export type Lazorkit = {
           {
             "name": "defaultRuleProgram",
             "type": "pubkey"
+          },
+          {
+            "name": "isPaused",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "configUpdated",
+      "docs": [
+        "Event emitted when program configuration is updated"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "updateType",
+            "type": "string"
+          },
+          {
+            "name": "oldValue",
+            "type": "string"
+          },
+          {
+            "name": "newValue",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "errorEvent",
+      "docs": [
+        "Event emitted for errors that are caught and handled"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "errorCode",
+            "type": "string"
+          },
+          {
+            "name": "errorMessage",
+            "type": "string"
+          },
+          {
+            "name": "actionAttempted",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -1111,6 +1599,161 @@ export type Lazorkit = {
                 "name": "action"
               }
             }
+          },
+          {
+            "name": "createNewAuthenticator",
+            "docs": [
+              "optional new authenticator passkey (only for `CallRuleProgram`)"
+            ],
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  33
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "feeCollected",
+      "docs": [
+        "Event emitted when a fee is collected"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "feeType",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "programInitialized",
+      "docs": [
+        "Event emitted when program is initialized"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "defaultRuleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "programPausedStateChanged",
+      "docs": [
+        "Event emitted when program is paused/unpaused"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "isPaused",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ruleProgramChanged",
+      "docs": [
+        "Event emitted when a rule program is changed"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "oldRuleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "newRuleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "securityEvent",
+      "docs": [
+        "Event emitted for security-related events"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "eventType",
+            "type": "string"
+          },
+          {
+            "name": "smartWallet",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "details",
+            "type": "string"
+          },
+          {
+            "name": "severity",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -1196,26 +1839,115 @@ export type Lazorkit = {
       }
     },
     {
-      "name": "smartWalletSeq",
+      "name": "smartWalletCreated",
       "docs": [
-        "Account that maintains the sequence number for smart wallet creation"
+        "Event emitted when a new smart wallet is created"
       ],
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "seq",
-            "docs": [
-              "Current sequence number, incremented for each new smart wallet"
-            ],
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "authenticator",
+            "type": "pubkey"
+          },
+          {
+            "name": "sequenceId",
             "type": "u64"
           },
           {
-            "name": "bump",
-            "docs": [
-              "Bump seed for PDA derivation"
-            ],
-            "type": "u8"
+            "name": "ruleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "passkeyHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "solTransfer",
+      "docs": [
+        "Event emitted when a SOL transfer occurs"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "transactionExecuted",
+      "docs": [
+        "Event emitted when a transaction is executed"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "smartWallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "authenticator",
+            "type": "pubkey"
+          },
+          {
+            "name": "action",
+            "type": "string"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "ruleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "cpiProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "success",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -1236,6 +1968,35 @@ export type Lazorkit = {
           },
           {
             "name": "admin"
+          },
+          {
+            "name": "pauseProgram"
+          },
+          {
+            "name": "unpauseProgram"
+          }
+        ]
+      }
+    },
+    {
+      "name": "whitelistRuleProgramAdded",
+      "docs": [
+        "Event emitted when a whitelist rule program is added"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "ruleProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }

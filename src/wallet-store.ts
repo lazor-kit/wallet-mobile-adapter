@@ -14,13 +14,7 @@
 import * as anchor from '@coral-xyz/anchor';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import {
-  WalletState,
-  WalletInfo,
-  WalletConfig,
-  ConnectOptions,
-  SignOptions,
-} from './types';
+import { WalletState, WalletInfo, WalletConfig, ConnectOptions, SignOptions } from './types';
 import { DEFAULT_COMMITMENT, DEFAULTS, STORAGE_KEYS } from './config';
 import { logger } from './utils';
 import { connectAction, disconnectAction, signMessageAction } from './actions';
@@ -68,7 +62,10 @@ const storage = {
       await AsyncStorage.setItem(name, value);
       logger.log('Saved to storage', { key: name });
     } catch (error) {
-      logger.error('Error writing to AsyncStorage:', error, { key: name, valueLength: value.length });
+      logger.error('Error writing to AsyncStorage:', error, {
+        key: name,
+        valueLength: value.length,
+      });
     }
   },
   removeItem: async (name: string): Promise<void> => {
@@ -148,7 +145,10 @@ export const useWalletStore = create<WalletState>()(
       setWallet: (wallet: WalletInfo | null) => {
         try {
           set({ wallet });
-          logger.log('Wallet state updated', { hasWallet: !!wallet, smartWallet: wallet?.smartWallet });
+          logger.log('Wallet state updated', {
+            hasWallet: !!wallet,
+            smartWallet: wallet?.smartWallet,
+          });
         } catch (error) {
           logger.error('Failed to set wallet:', error, { wallet });
           throw error;
@@ -228,11 +228,8 @@ export const useWalletStore = create<WalletState>()(
        * @param txnIns - Transaction instruction to execute
        * @param options - Signing options with callbacks and redirect URL
        */
-      signMessage: (
-        txnIns: anchor.web3.TransactionInstruction,
-        options: SignOptions,
-        ruleIns: anchor.web3.TransactionInstruction | null = null
-      ) => signMessageAction(get, set, ruleIns, txnIns, options),
+      signMessage: (txnIns: anchor.web3.TransactionInstruction, options: SignOptions) =>
+        signMessageAction(get, set, txnIns, options),
     }),
     {
       // ========================================================================

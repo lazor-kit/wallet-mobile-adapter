@@ -1,5 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import React from 'react';
+import { ExecuteAction, ExecuteActionType } from './anchor/types';
 
 /**
  * Core wallet types
@@ -27,7 +28,14 @@ export interface LazorKitWalletProviderProps {
   readonly ipfsUrl?: string;
   readonly paymasterUrl?: string;
   readonly isDebug?: boolean;
-  readonly children: React.ReactNode;
+  readonly children:
+    | React.JSX.Element
+    | React.JSX.Element[]
+    | string
+    | number
+    | boolean
+    | null
+    | undefined;
 }
 
 /**
@@ -55,6 +63,9 @@ export interface DisconnectOptions {
 
 export interface SignOptions {
   readonly redirectUrl: string;
+  readonly action?: ExecuteActionType;
+  readonly ruleIns?: anchor.web3.TransactionInstruction;
+  readonly createNewPasskey?: number[];
   readonly onSuccess?: (signature: string) => void;
   readonly onFail?: (error: Error) => void;
 }
@@ -98,6 +109,7 @@ export interface WalletState {
  */
 export interface LazorWalletHook {
   smartWalletPubkey: anchor.web3.PublicKey | null;
+  passkeyPubkey: number[] | null;
   isConnected: boolean;
   isLoading: boolean;
   isConnecting: boolean;
@@ -120,7 +132,8 @@ export interface WalletActions {
   executeWallet: (
     data: WalletInfo,
     browserResult: BrowserResult,
-    txnIns: anchor.web3.TransactionInstruction
+    txnIns: anchor.web3.TransactionInstruction,
+    signOptions: SignOptions
   ) => Promise<string>;
 }
 

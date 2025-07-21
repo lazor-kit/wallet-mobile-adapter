@@ -7,20 +7,15 @@
 
 import * as anchor from '@coral-xyz/anchor';
 import { useWalletStore } from './wallet-store';
-import {
-  ConnectOptions,
-  DisconnectOptions,
-  LazorWalletHook,
-  SignOptions,
-} from './types';
+import { ConnectOptions, DisconnectOptions, LazorWalletHook, SignOptions } from './types';
 import { logger } from './utils';
 
 /**
  * Hook that manages the LazorKit wallet flow
- * 
+ *
  * This hook provides access to wallet state and operations including
  * connection, disconnection, and transaction signing through smart wallets.
- * 
+ *
  * @returns LazorWalletHook interface with wallet state and methods
  */
 export function useLazorWallet(): LazorWalletHook {
@@ -70,11 +65,11 @@ export function useLazorWallet(): LazorWalletHook {
   ): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       try {
-        logger.log('Hook signMessage initiated', { 
-          instruction: txnIns.programId.toString(),
-          redirectUrl: signOptions.redirectUrl 
+        logger.log('Hook signMessage initiated', {
+          instruction: txnIns.toString(),
+          redirectUrl: signOptions.redirectUrl,
         });
-        
+
         signMessage(txnIns, {
           redirectUrl: signOptions.redirectUrl,
           onSuccess: (signature) => {
@@ -85,19 +80,20 @@ export function useLazorWallet(): LazorWalletHook {
             resolve(signature);
           },
           onFail: (error) => {
-            logger.error('Hook signMessage failed:', error, { 
+            logger.error('Hook signMessage failed:', error, {
               instruction: txnIns.programId.toString(),
-              redirectUrl: signOptions.redirectUrl 
+              redirectUrl: signOptions.redirectUrl,
             });
             signOptions?.onFail?.(error);
             reject(error);
           },
+          action: signOptions.action,
         });
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
-        logger.error('Hook signMessage initialization failed:', err, { 
+        logger.error('Hook signMessage initialization failed:', err, {
           instruction: txnIns.programId.toString(),
-          redirectUrl: signOptions.redirectUrl 
+          redirectUrl: signOptions.redirectUrl,
         });
         signOptions?.onFail?.(err);
         reject(err);
@@ -106,9 +102,8 @@ export function useLazorWallet(): LazorWalletHook {
   };
 
   return {
-    smartWalletPubkey: wallet?.smartWallet
-      ? new anchor.web3.PublicKey(wallet.smartWallet)
-      : null,
+    smartWalletPubkey: wallet?.smartWallet ? new anchor.web3.PublicKey(wallet.smartWallet) : null,
+    passkeyPubkey: wallet?.passkeyPubkey || null,
     isConnected: !!wallet,
     isLoading,
     isConnecting,
@@ -119,4 +114,4 @@ export function useLazorWallet(): LazorWalletHook {
     disconnect: handleDisconnect,
     signMessage: handleSignMessage,
   };
-} 
+}

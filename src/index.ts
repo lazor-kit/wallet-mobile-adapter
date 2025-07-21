@@ -111,4 +111,5 @@ export {
  * These are optional and only needed for advanced on-chain operations
  */
 export * from './anchor/interface/lazorkit';
+export * from './anchor/interface/default_rule';
 export * from './anchor/types';

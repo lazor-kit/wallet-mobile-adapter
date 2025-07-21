@@ -38,13 +38,13 @@ Buffer.prototype.subarray = function subarray(begin: number | undefined, end: nu
  * and sets up the Solana connection. The isDebug prop controls whether
  * debug logging is enabled throughout the SDK.
  */
-export const LazorKitWalletProvider: React.FC<LazorKitWalletProviderProps> = ({
+export const LazorKitWalletProvider = ({
   rpcUrl = DEFAULTS.RPC_ENDPOINT,
   ipfsUrl = DEFAULTS.IPFS_URL,
   paymasterUrl = DEFAULTS.PAYMASTER_URL,
   isDebug = false,
   children,
-}) => {
+}: LazorKitWalletProviderProps): React.JSX.Element => {
   const { setConnection, setConfig } = useWalletStore();
 
   // Set debug mode for logger
@@ -71,21 +71,21 @@ export const LazorKitWalletProvider: React.FC<LazorKitWalletProviderProps> = ({
 
   useEffect(() => {
     try {
-      logger.info('Initializing wallet store configuration', { 
-        rpcUrl, 
-        ipfsUrl, 
+      logger.info('Initializing wallet store configuration', {
+        rpcUrl,
+        ipfsUrl,
         paymasterUrl,
         isDebug,
       });
-      
+
       setConnection(connection);
       setConfig({ ipfsUrl, paymasterUrl, rpcUrl });
-      
+
       logger.info('Wallet store configuration completed successfully');
     } catch (error) {
-      logger.error('Failed to initialize wallet store:', error, { 
-        rpcUrl, 
-        ipfsUrl, 
+      logger.error('Failed to initialize wallet store:', error, {
+        rpcUrl,
+        ipfsUrl,
         paymasterUrl,
         isDebug,
       });

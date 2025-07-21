@@ -1,6 +1,6 @@
 {
   "name": "@lazorkit/wallet-mobile-adapter",
-  "version": "1.2.86",
+  "version": "1.2.94",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -12,22 +12,52 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup --bundleConfigAsCjs -c rollup.config.js"
+    "build": "rollup --bundleConfigAsCjs -c rollup.config.js",
+    "prepublishOnly": "node scripts/prepublish-check.js && npm run build",
+    "prepack": "npm run build",
+    "prepublish-check": "node scripts/prepublish-check.js"
   },
   "keywords": [
     "lazorkit",
     "wallet",
     "mobile",
     "adapter",
-    "sdk"
+    "sdk",
+    "solana",
+    "webauthn",
+    "passkey",
+    "smart-wallet",
+    "react-native",
+    "expo"
   ],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "LazorKit Team",
+  "license": "MIT",
+  "description": "React Native adapter for LazorKit smart wallet with WebAuthn/passkey authentication on Solana",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lazorkit/wallet-mobile-adapter.git"
+  },
+  "homepage": "https://lazor.sh",
+  "bugs": {
+    "url": "https://github.com/lazorkit/wallet-mobile-adapter/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.70.0"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@eslint/js": "9.28.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
+    "@types/bn.js": "^5.2.0",
     "@types/bs58": "4.0.4",
     "@types/react": "19.1.8",
     "eslint": "9.28.0",

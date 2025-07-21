@@ -107,7 +107,6 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
 export const signMessageAction = async (
   get: () => WalletState,
   set: (state: Partial<WalletState>) => void,
-  ruleIns: anchor.web3.TransactionInstruction | null = null,
   txnIns: anchor.web3.TransactionInstruction,
   options: SignOptions
 ) => {
@@ -142,9 +141,9 @@ export const signMessageAction = async (
     const lazorProgram = new LazorKitProgram(connection);
     const message = await lazorProgram.getMessage(
       wallet.smartWallet,
-      ruleIns,
-      wallet.smartWalletAuthenticator,
-      txnIns
+      options.ruleIns,
+      txnIns,
+      options.action
     );
 
     const encodedChallenge = Buffer.from(message)
@@ -173,7 +172,12 @@ export const signMessageAction = async (
             config
           );
 
-          const txnSignature = await walletActions.executeWallet(wallet, browserResult, txnIns);
+          const txnSignature = await walletActions.executeWallet(
+            wallet,
+            browserResult,
+            txnIns,
+            options
+          );
           logger.log('Sign completed successfully', { signature: txnSignature });
           options?.onSuccess?.(txnSignature);
         } catch (error) {

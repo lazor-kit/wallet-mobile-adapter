@@ -7,7 +7,7 @@
 
 import { Linking, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { WalletInfo, BrowserResult, WalletActions } from './types';
+import { WalletInfo, BrowserResult, WalletActions, SignOptions } from './types';
 import * as anchor from '@coral-xyz/anchor';
 import { LazorKitProgram } from './anchor/interface/lazorkit';
 
@@ -308,13 +308,13 @@ export const createWalletActions = (
         try {
           const feePayer = await getFeePayer(config.paymasterUrl);
 
-          const createTxn = await lazorProgram.createSmartWalletTxn(
+          const result = await lazorProgram.createSmartWalletTxn(
             data.passkeyPubkey,
             feePayer,
             data.credentialId
           );
 
-          const serialized = createTxn
+          const serialized = result.transaction
             .serialize({ verifySignatures: false, requireAllSignatures: false })
             .toString('base64');
 
@@ -371,7 +371,8 @@ export const createWalletActions = (
   const executeWallet = async (
     data: WalletInfo,
     browserResult: BrowserResult,
-    txnIns: anchor.web3.TransactionInstruction
+    txnIns: anchor.web3.TransactionInstruction,
+    options: SignOptions
   ): Promise<string> => {
     setLoading(true);
 
@@ -385,7 +386,10 @@ export const createWalletActions = (
         Buffer.from(browserResult.signature, 'base64'),
         feePayer,
         new anchor.web3.PublicKey(data.smartWallet),
-        txnIns // cpiInstruction
+        txnIns, // cpiInstruction
+        options.ruleIns,
+        options.action,
+        options.createNewPasskey
       );
 
       const serialized = executeTransaction

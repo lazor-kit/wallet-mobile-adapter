@@ -62,7 +62,7 @@ export type DefaultRule = {
         },
         {
           name: 'lazorkit';
-          address: 'HKAM6aGJsNuyxoVKNk8kgqMTUNSDjA3ciZUikHYemQzL';
+          address: 'J6Big9w1VNeRZgDWH5qmNz2Nd6XFq5QeZbqC8caqSE5W';
         },
         {
           name: 'systemProgram';
@@ -121,7 +121,7 @@ export type DefaultRule = {
         },
         {
           name: 'lazorkit';
-          address: 'HKAM6aGJsNuyxoVKNk8kgqMTUNSDjA3ciZUikHYemQzL';
+          address: 'J6Big9w1VNeRZgDWH5qmNz2Nd6XFq5QeZbqC8caqSE5W';
         },
         {
           name: 'systemProgram';

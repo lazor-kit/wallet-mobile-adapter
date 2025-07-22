@@ -5,18 +5,21 @@
  * These actions handle wallet connection, disconnection, and transaction signing.
  */
 
-import {
-  handleAuthRedirect,
-  openBrowser,
-  openSignBrowser,
-  handleBrowserResult,
-  createWalletActions,
-  logger,
-} from './utils';
+import { handleAuthRedirect } from './core/auth/handleRedirect';
+import { openBrowser, openSignBrowser } from './core/browser/open';
+import { handleBrowserResult } from './core/browser/parseResult';
+import { createWalletActions } from './core/wallet/actions';
+import { logger } from './core/logger';
 import { Buffer } from 'buffer';
 import { API_ENDPOINTS } from './config';
 import * as anchor from '@coral-xyz/anchor';
-import { WalletState, ConnectOptions, SignOptions } from './types';
+import {
+  WalletState,
+  ConnectOptions,
+  SignOptions,
+  WalletConnectionError,
+  SigningError,
+} from './types';
 import { LazorKitProgram } from './anchor/interface/lazorkit';
 
 /**
@@ -35,7 +38,7 @@ export const connectAction = async (
   const { isConnecting, config } = get();
   if (isConnecting) {
     logger.error('Connect attempt while already connecting');
-    throw new Error('Already connecting');
+    throw new WalletConnectionError('Already connecting');
   }
 
   set({ isConnecting: true, error: null });
@@ -46,13 +49,11 @@ export const connectAction = async (
       API_ENDPOINTS.CONNECT
     }&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
-    logger.log('Initiating wallet connection', { connectUrl, redirectUrl });
-
     const resultUrl = await openBrowser(connectUrl, redirectUrl);
     const walletInfo = handleAuthRedirect(resultUrl);
     if (!walletInfo) {
       logger.error('Invalid wallet info from redirect', { resultUrl });
-      throw new Error('Invalid wallet info from redirect');
+      throw new WalletConnectionError('Invalid wallet info from redirect');
     }
 
     const { saveWallet } = createWalletActions(
@@ -63,10 +64,9 @@ export const connectAction = async (
 
     const savedWallet = await saveWallet(walletInfo);
     set({ wallet: savedWallet });
-    logger.log('Wallet connected successfully', { smartWallet: savedWallet.smartWallet });
     return savedWallet;
   } catch (error: unknown) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = error instanceof Error ? error : new WalletConnectionError(String(error));
     logger.error('Connect action failed:', err, { redirectUrl: options.redirectUrl });
     set({ error: err });
     throw err;
@@ -83,9 +83,7 @@ export const connectAction = async (
 export const disconnectAction = async (set: (state: Partial<WalletState>) => void) => {
   set({ isLoading: true });
   try {
-    logger.log('Disconnecting wallet');
     set({ wallet: null });
-    logger.log('Wallet disconnected successfully');
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Disconnect action failed:', err);
@@ -112,19 +110,18 @@ export const signMessageAction = async (
 ) => {
   const { isSigning, connection, wallet, config } = get();
   if (isSigning) {
-    logger.warn('Sign attempt while already signing');
     return;
   }
 
   if (!wallet) {
-    const error = new Error('No wallet connected');
+    const error = new SigningError('No wallet connected');
     logger.error('Sign failed: No wallet connected');
     options?.onFail?.(error);
     return;
   }
 
   if (!connection) {
-    const error = new Error('No connection available');
+    const error = new SigningError('No connection available');
     logger.error('Sign failed: No connection available');
     options?.onFail?.(error);
     return;
@@ -133,11 +130,6 @@ export const signMessageAction = async (
   set({ isSigning: true, error: null });
 
   try {
-    logger.log('Starting sign message flow', {
-      smartWallet: wallet.smartWallet,
-      instruction: txnIns.programId.toString(),
-    });
-
     const lazorProgram = new LazorKitProgram(connection);
     const message = await lazorProgram.getMessage(
       wallet.smartWallet,
@@ -157,14 +149,11 @@ export const signMessageAction = async (
       encodedChallenge
     )}&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
-    logger.log('Opening sign browser', { signUrl, redirectUrl });
-
     await openSignBrowser(
       signUrl,
       redirectUrl,
       async (urlResult) => {
         try {
-          logger.log('Received sign browser result', { urlResult });
           const browserResult = handleBrowserResult(urlResult);
           const walletActions = createWalletActions(
             connection,
@@ -178,7 +167,6 @@ export const signMessageAction = async (
             txnIns,
             options
           );
-          logger.log('Sign completed successfully', { signature: txnSignature });
           options?.onSuccess?.(txnSignature);
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
@@ -199,7 +187,7 @@ export const signMessageAction = async (
       instruction: txnIns.programId.toString(),
       redirectUrl: options.redirectUrl,
     });
-    const err = error instanceof Error ? error : new Error('Unknown error');
+    const err = error instanceof Error ? error : new SigningError('Unknown error');
     set({ error: err });
     options?.onFail?.(err);
   } finally {

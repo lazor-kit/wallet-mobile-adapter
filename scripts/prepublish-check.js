@@ -140,7 +140,6 @@ function checkExports() {
     
     const requiredExports = [
       'LazorKitProvider',
-      'LazorKitWalletProvider', 
       'useLazorWallet',
       'useWalletStore',
       'WalletInfo',

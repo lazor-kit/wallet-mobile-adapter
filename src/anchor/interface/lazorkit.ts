@@ -21,6 +21,7 @@ export class LazorKitProgram {
   // Caches for PDAs
   private _config?: anchor.web3.PublicKey;
   private _whitelistRulePrograms?: anchor.web3.PublicKey;
+  private _lookupTableAccount?: anchor.web3.AddressLookupTableAccount;
 
   readonly defaultRuleProgram: DefaultRuleProgram;
 
@@ -52,6 +53,27 @@ export class LazorKitProgram {
       )[0];
     }
     return this._whitelistRulePrograms;
+  }
+
+  /**
+   * Get or fetch the address lookup table account
+   */
+  async getLookupTableAccount(): Promise<anchor.web3.AddressLookupTableAccount | null> {
+    if (!this._lookupTableAccount) {
+      try {
+        const response = await this.connection.getAddressLookupTable(
+          constants.ADDRESS_LOOKUP_TABLE
+        );
+        if (response === null || response.value === null) {
+          throw new Error('Lookup table account not found');
+        }
+        this._lookupTableAccount = response.value;
+      } catch (error) {
+        console.warn('Failed to fetch lookup table account:', error);
+        return null;
+      }
+    }
+    return this._lookupTableAccount;
   }
 
   /**
@@ -115,6 +137,11 @@ export class LazorKitProgram {
     throw new Error(`Failed to generate unique wallet ID after ${maxAttempts} attempts`);
   }
 
+  async generateUniqueWalletIdWithRetry(maxAttempts: number = 10): Promise<anchor.web3.PublicKey> {
+    const walletId = await this.generateUniqueWalletId(maxAttempts);
+    return this.smartWallet(walletId);
+  }
+
   /**
    * Find smart wallet PDA with given ID
    */
@@ -157,6 +184,25 @@ export class LazorKitProgram {
 
   async getSmartWalletAuthenticatorData(smartWalletAuthenticator: anchor.web3.PublicKey) {
     return await this.program.account.smartWalletAuthenticator.fetch(smartWalletAuthenticator);
+  }
+
+  // Helper method to create versioned transactions
+  private async createVersionedTransaction(
+    instructions: anchor.web3.TransactionInstruction[],
+    payer: anchor.web3.PublicKey
+  ): Promise<anchor.web3.VersionedTransaction> {
+    const lookupTableAccount = await this.getLookupTableAccount();
+    const { blockhash } = await this.connection.getLatestBlockhash();
+
+    // Create v0 compatible transaction message
+    const messageV0 = new anchor.web3.TransactionMessage({
+      payerKey: payer,
+      recentBlockhash: blockhash,
+      instructions,
+    }).compileToV0Message(lookupTableAccount ? [lookupTableAccount] : []);
+
+    // Create v0 transaction from the v0 message
+    return new anchor.web3.VersionedTransaction(messageV0);
   }
 
   // txn methods
@@ -371,11 +417,11 @@ export class LazorKitProgram {
       .remainingAccounts(remainingAccounts)
       .instruction();
 
-    const txn = new anchor.web3.Transaction().add(verifySignatureIx).add(executeInstructionIx);
+    const tx = new anchor.web3.Transaction().add(verifySignatureIx, executeInstructionIx);
+    tx.feePayer = payer;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
 
-    txn.feePayer = payer;
-    txn.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-    return txn;
+    return tx;
   }
 
   /**

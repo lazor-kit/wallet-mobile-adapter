@@ -23,7 +23,7 @@ export interface WalletConfig {
 /**
  * Provider configuration types
  */
-export interface LazorKitWalletProviderProps {
+export interface LazorKitProviderProps {
   readonly rpcUrl?: string;
   readonly ipfsUrl?: string;
   readonly paymasterUrl?: string;

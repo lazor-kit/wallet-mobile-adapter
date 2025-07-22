@@ -1,6 +1,6 @@
 {
   "name": "@lazorkit/wallet-mobile-adapter",
-  "version": "1.2.94",
+  "version": "1.3.05",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -46,11 +46,23 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "react-native": ">=0.70.0"
+    "react-native": ">=0.70.0",
+    "zustand": ">=5.0.0",
+    "expo-web-browser": ">=14.0.0",
+    "react-native-get-random-values": ">=1.11.0"
   },
   "peerDependenciesMeta": {
     "react-native": {
       "optional": true
+    },
+    "zustand": {
+      "optional": false
+    },
+    "expo-web-browser": {
+      "optional": false
+    },
+    "react-native-get-random-values": {
+      "optional": false
     }
   },
   "devDependencies": {
@@ -75,9 +87,6 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@rollup/plugin-commonjs": "28.0.3",
     "buffer": "6.0.3",
-    "expo-web-browser": "14.1.6",
-    "js-sha256": "0.11.1",
-    "react-native-get-random-values": "1.11.0",
-    "zustand": "5.0.5"
+    "js-sha256": "0.11.1"
   }
 }

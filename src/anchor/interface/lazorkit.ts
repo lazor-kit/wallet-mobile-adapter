@@ -246,7 +246,8 @@ export class LazorKitProgram {
     payer: anchor.web3.PublicKey,
     credentialId: string = '',
     ruleIns: anchor.web3.TransactionInstruction | null = null,
-    walletId?: bigint
+    walletId?: bigint,
+    isPayForUser: boolean = false
   ): Promise<{
     transaction: anchor.web3.Transaction;
     walletId: bigint;
@@ -270,7 +271,8 @@ export class LazorKitProgram {
         passkeyPubkey,
         Buffer.from(credentialId, 'base64'),
         ruleInstruction.data,
-        new anchor.BN(id.toString())
+        new anchor.BN(id.toString()),
+        isPayForUser
       )
       .accountsPartial({
         signer: payer,

@@ -330,6 +330,10 @@ export type Lazorkit = {
         {
           "name": "walletId",
           "type": "u64"
+        },
+        {
+          "name": "isPayForUser",
+          "type": "bool"
         }
       ]
     },
@@ -2030,3 +2034,4 @@ export type Lazorkit = {
     }
   ]
 };
+

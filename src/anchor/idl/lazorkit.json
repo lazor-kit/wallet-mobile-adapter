@@ -324,6 +324,10 @@
         {
           "name": "wallet_id",
           "type": "u64"
+        },
+        {
+          "name": "is_pay_for_user",
+          "type": "bool"
         }
       ]
     },

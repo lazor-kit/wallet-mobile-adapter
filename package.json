@@ -21,8 +21,8 @@
     "adapter",
     "sdk"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Lazorkit",
+  "license": "MIT",
   "description": "",
   "devDependencies": {
     "@eslint/js": "9.28.0",

@@ -1,7 +1,7 @@
 import * as anchor from '@coral-xyz/anchor';
 import { sha256 } from 'js-sha256';
 import { instructionToAccountMetas } from './utils';
-
+import { Buffer } from 'buffer';
 const coder: anchor.BorshCoder = (() => {
   const idl: any = {
     version: '0.1.0',

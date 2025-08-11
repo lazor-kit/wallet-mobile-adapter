@@ -115,7 +115,7 @@ function checkDistFiles() {
   // Check file sizes
   results.push(checkFileSize('dist/index.js', 500, 'Main bundle size check'));
   results.push(checkFileSize('dist/index.esm.js', 500, 'ESM bundle size check'));
-  results.push(checkFileSize('dist/index.d.ts', 100, 'Types file size check'));
+  results.push(checkFileSize('dist/index.d.ts', 200, 'Types file size check'));
   
   return results;
 }

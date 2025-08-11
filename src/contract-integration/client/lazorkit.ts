@@ -21,10 +21,9 @@ import {
   deriveCpiCommitPda,
 } from '../pda/lazorkit';
 import { buildSecp256r1VerifyIx } from '../webauthn/secp256r1';
-import { instructionToAccountMetas } from '../utils';
+import { getRandomBytes, instructionToAccountMetas } from '../utils';
 import { sha256 } from 'js-sha256';
 import * as types from '../types';
-import { randomBytes } from 'crypto';
 import { DefaultRuleClient } from './defaultRule';
 import * as bs58 from 'bs58';
 import { Buffer } from 'buffer';
@@ -68,7 +67,7 @@ export class LazorkitClient {
 
   // Convenience helpers
   generateWalletId(): BN {
-    return new BN(randomBytes(8), 'le');
+    return new BN(getRandomBytes(8), 'le');
   }
 
   async getConfigData() {

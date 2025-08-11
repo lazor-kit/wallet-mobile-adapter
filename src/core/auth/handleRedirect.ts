@@ -7,6 +7,7 @@
 
 import { WalletInfo } from '../../types';
 import { logger } from '../logger';
+import { Buffer } from 'buffer';
 
 /**
  * Parses the authentication redirect URL and returns wallet data.

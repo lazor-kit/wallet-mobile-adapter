@@ -1,5 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 
 const SIGNATURE_OFFSETS_SERIALIZED_SIZE = 14;
 const SIGNATURE_OFFSETS_START = 2;

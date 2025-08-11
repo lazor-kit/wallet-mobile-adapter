@@ -18,9 +18,10 @@ class Logger {
     // Fall back to false if neither flag is set.
     // Using double negation to ensure boolean casting.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const envDebug = (typeof process !== 'undefined' && (process as any).env?.LAZORKIT_DEBUG) === 'true';
+    const envDebug =
+      (typeof process !== 'undefined' && (process as any).env?.LAZORKIT_DEBUG) === 'true';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rnDev = (typeof __DEV__ !== 'undefined' && (__DEV__ as any) === true);
+    const rnDev = typeof __DEV__ !== 'undefined' && (__DEV__ as any) === true;
     this.isDebugMode = envDebug || rnDev || false;
   }
 
@@ -58,4 +59,4 @@ class Logger {
   }
 }
 
-export const logger = new Logger(); 
+export const logger = new Logger();

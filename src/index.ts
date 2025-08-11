@@ -19,5 +19,4 @@ export { useWalletStore } from './react/store';
 export * from './types';
 export { logger } from './core/logger';
 export * from './config';
-export * from './anchor/types';
-export * from './anchor/interface/lazorkit';
+export * from './contract-integration/index';

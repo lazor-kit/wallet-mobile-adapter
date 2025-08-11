@@ -9,7 +9,16 @@
   "instructions": [
     {
       "name": "add_device",
-      "discriminator": [21, 27, 66, 42, 18, 30, 14, 18],
+      "discriminator": [
+        21,
+        27,
+        66,
+        42,
+        18,
+        30,
+        14,
+        18
+      ],
       "accounts": [
         {
           "name": "payer",
@@ -29,7 +38,12 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [114, 117, 108, 101]
+                "value": [
+                  114,
+                  117,
+                  108,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -45,7 +59,12 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [114, 117, 108, 101]
+                "value": [
+                  114,
+                  117,
+                  108,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -67,7 +86,16 @@
     },
     {
       "name": "check_rule",
-      "discriminator": [215, 90, 220, 175, 191, 212, 144, 147],
+      "discriminator": [
+        215,
+        90,
+        220,
+        175,
+        191,
+        212,
+        144,
+        147
+      ],
       "accounts": [
         {
           "name": "smart_wallet_authenticator",
@@ -82,7 +110,16 @@
     },
     {
       "name": "init_rule",
-      "discriminator": [129, 224, 96, 169, 247, 125, 74, 118],
+      "discriminator": [
+        129,
+        224,
+        96,
+        169,
+        247,
+        125,
+        74,
+        118
+      ],
       "accounts": [
         {
           "name": "payer",
@@ -94,7 +131,9 @@
         },
         {
           "name": "smart_wallet_authenticator",
-          "docs": ["CHECK"],
+          "docs": [
+            "CHECK"
+          ],
           "signer": true
         },
         {
@@ -104,7 +143,12 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [114, 117, 108, 101]
+                "value": [
+                  114,
+                  117,
+                  108,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -128,11 +172,29 @@
   "accounts": [
     {
       "name": "Rule",
-      "discriminator": [82, 10, 53, 40, 250, 61, 143, 130]
+      "discriminator": [
+        82,
+        10,
+        53,
+        40,
+        250,
+        61,
+        143,
+        130
+      ]
     },
     {
       "name": "SmartWalletAuthenticator",
-      "discriminator": [126, 36, 85, 166, 77, 139, 221, 129]
+      "discriminator": [
+        126,
+        36,
+        85,
+        166,
+        77,
+        139,
+        221,
+        129
+      ]
     }
   ],
   "errors": [
@@ -164,30 +226,43 @@
     },
     {
       "name": "SmartWalletAuthenticator",
-      "docs": ["Account that stores authentication data for a smart wallet"],
+      "docs": [
+        "Account that stores authentication data for a smart wallet"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "passkey_pubkey",
-            "docs": ["The public key of the passkey that can authorize transactions"],
+            "docs": [
+              "The public key of the passkey that can authorize transactions"
+            ],
             "type": {
-              "array": ["u8", 33]
+              "array": [
+                "u8",
+                33
+              ]
             }
           },
           {
             "name": "smart_wallet",
-            "docs": ["The smart wallet this authenticator belongs to"],
+            "docs": [
+              "The smart wallet this authenticator belongs to"
+            ],
             "type": "pubkey"
           },
           {
             "name": "credential_id",
-            "docs": ["The credential ID this authenticator belongs to"],
+            "docs": [
+              "The credential ID this authenticator belongs to"
+            ],
             "type": "bytes"
           },
           {
             "name": "bump",
-            "docs": ["Bump seed for PDA derivation"],
+            "docs": [
+              "Bump seed for PDA derivation"
+            ],
             "type": "u8"
           }
         ]

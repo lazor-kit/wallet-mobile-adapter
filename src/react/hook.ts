@@ -6,6 +6,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { useWalletStore } from './store';
 import { ConnectOptions, DisconnectOptions, LazorWalletHook, SignOptions } from '../types';
 import { logger } from '../core/logger';
+import { MessageArgs } from '../contract-integration';
 
 export function useLazorWallet(): LazorWalletHook {
   const {
@@ -45,13 +46,10 @@ export function useLazorWallet(): LazorWalletHook {
     }
   };
 
-  const handleSignMessage = (
-    txnIns: anchor.web3.TransactionInstruction,
-    signOptions: SignOptions
-  ): Promise<string> => {
+  const handleSignMessage = (action: MessageArgs, signOptions: SignOptions): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       try {
-        signMessage(txnIns, {
+        signMessage(action, {
           redirectUrl: signOptions.redirectUrl,
           onSuccess: (signature) => {
             signOptions?.onSuccess?.(signature);
@@ -59,18 +57,15 @@ export function useLazorWallet(): LazorWalletHook {
           },
           onFail: (error) => {
             logger.error('Hook signMessage failed:', error, {
-              instruction: txnIns.programId.toString(),
               redirectUrl: signOptions.redirectUrl,
             });
             signOptions?.onFail?.(error);
             reject(error);
           },
-          action: signOptions.action,
         });
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
         logger.error('Hook signMessage initialization failed:', err, {
-          instruction: txnIns.programId.toString(),
           redirectUrl: signOptions.redirectUrl,
         });
         signOptions?.onFail?.(err);

@@ -85,4 +85,4 @@ export const signAndSendTxn = async ({
     logger.error('Relayer request failed:', error, { relayerUrl, payload });
     throw error;
   }
-}; 
+};

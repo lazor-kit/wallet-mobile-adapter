@@ -70,4 +70,4 @@ export const openSignBrowser = async (
     logger.error('Sign browser error:', err, { url, redirectUrl });
     onError(err);
   }
-}; 
+};

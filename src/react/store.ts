@@ -8,16 +8,11 @@
 import * as anchor from '@coral-xyz/anchor';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import {
-  WalletState,
-  WalletInfo,
-  WalletConfig,
-  ConnectOptions,
-  SignOptions,
-} from '../types';
+import { WalletState, WalletInfo, WalletConfig, ConnectOptions, SignOptions } from '../types';
 import { DEFAULT_COMMITMENT, DEFAULTS, STORAGE_KEYS } from '../config';
 import { logger } from '../core/logger';
 import { connectAction, disconnectAction, signMessageAction } from '../actions';
+import { MessageArgs } from '../contract-integration';
 
 // AsyncStorage dynamic import remains unchanged
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,8 +135,8 @@ export const useWalletStore = create<WalletState>()(
 
       connect: (options: ConnectOptions) => connectAction(get, set, options),
       disconnect: () => disconnectAction(set),
-      signMessage: (txnIns: anchor.web3.TransactionInstruction, options: SignOptions) =>
-        signMessageAction(get, set, txnIns, options),
+      signMessage: (action: MessageArgs, options: SignOptions) =>
+        signMessageAction(get, set, action, options),
     }),
     {
       name: STORAGE_KEYS.WALLET,
@@ -152,4 +147,4 @@ export const useWalletStore = create<WalletState>()(
       }),
     }
   )
-); 
+);

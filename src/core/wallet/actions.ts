@@ -8,7 +8,12 @@
 
 import * as anchor from '@coral-xyz/anchor';
 import { WalletInfo, BrowserResult, WalletActions, SignOptions } from '../../types';
-import { LazorKitProgram } from '../../anchor/interface/lazorkit';
+import {
+  ArgsByAction,
+  LazorkitClient,
+  MessageArgs,
+  SmartWalletAction,
+} from '../../contract-integration';
 import { getFeePayer, signAndSendTxn } from '../paymaster';
 import { logger } from '../logger';
 
@@ -21,7 +26,7 @@ export const createWalletActions = (
   setLoading: (isLoading: boolean) => void,
   config: { paymasterUrl: string }
 ): WalletActions => {
-  const lazorProgram = new LazorKitProgram(connection);
+  const lazorProgram = new LazorkitClient(connection);
 
   /**
    * Ensures the smart wallet exists on-chain, creating it if needed.
@@ -40,11 +45,11 @@ export const createWalletActions = (
 
         const feePayer = await getFeePayer(config.paymasterUrl);
 
-        const result = await lazorProgram.createSmartWalletTxn(
-          data.passkeyPubkey,
-          feePayer,
-          data.credentialId
-        );
+        const result = await lazorProgram.createSmartWalletTx({
+          passkeyPubkey: data.passkeyPubkey,
+          payer: feePayer,
+          credentialIdBase64: data.credentialId,
+        });
 
         const serialized = result.transaction
           .serialize({ verifySignatures: false, requireAllSignatures: false })
@@ -97,57 +102,91 @@ export const createWalletActions = (
    */
   const executeWallet = async (
     data: WalletInfo,
+    feePayer: anchor.web3.PublicKey,
+    action: MessageArgs,
     browserResult: BrowserResult,
-    txnIns: anchor.web3.TransactionInstruction,
-    options: SignOptions
-  ): Promise<string> => {
+    _options: SignOptions
+  ): Promise<Array<anchor.web3.VersionedTransaction>> => {
     setLoading(true);
-
     try {
-      const feePayer = await getFeePayer(config.paymasterUrl);
+      switch (action.type) {
+        case SmartWalletAction.ExecuteTx: {
+          const { ruleInstruction, cpiInstruction } =
+            action.args as ArgsByAction[SmartWalletAction.ExecuteTx];
 
-      const executeTransaction = await lazorProgram.executeInstructionTxn(
-        data.passkeyPubkey,
-        Buffer.from(browserResult.clientDataJsonBase64, 'base64'),
-        Buffer.from(browserResult.authenticatorDataBase64, 'base64'),
-        Buffer.from(browserResult.signature, 'base64'),
-        feePayer,
-        new anchor.web3.PublicKey(data.smartWallet),
-        txnIns,
-        options.ruleIns,
-        options.action,
-        options.createNewPasskey
-      );
+          const executeTransaction = await lazorProgram.executeTxnDirectTx({
+            passkeyPubkey: data.passkeyPubkey,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            signature64: browserResult.signature,
+            payer: feePayer,
+            cpiInstruction,
+            ruleInstruction,
+          });
+          if (true) {
+            const commitCpiTxn = await lazorProgram.commitCpiTx({
+              passkeyPubkey: data.passkeyPubkey,
+              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+              signature64: browserResult.signature,
+              payer: feePayer,
+              ruleInstruction,
+              expiresAt: Math.floor(Date.now() / 1000) + 30,
+            });
 
-      // Debug log removed
+            logger.log('commitCpiTxn', commitCpiTxn.serialize().length);
 
-      const serialized = executeTransaction
-        .serialize({
-          verifySignatures: false,
-          requireAllSignatures: false,
-        })
-        .toString('base64');
+            const executeTransaction = await lazorProgram.executeCommitedTx({
+              payer: feePayer,
+              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+              cpiInstruction,
+            });
 
-      const { result: sendResult, error: sendError } = await signAndSendTxn({
-        base64EncodedTransaction: serialized,
-        relayerUrl: config.paymasterUrl,
-      });
+            logger.log('executeTransaction', executeTransaction.serialize().length);
 
-      if (sendError) {
-        logger.error('Execute wallet relayer error:', sendError, {
-          paymasterUrl: config.paymasterUrl,
-          smartWallet: data.smartWallet,
-        });
-        throw new Error(`Execute wallet relayer error: ${JSON.stringify(sendError)}`);
+            return [commitCpiTxn, executeTransaction];
+          }
+        }
+        case SmartWalletAction.CallRule: {
+          return [];
+        }
+        case SmartWalletAction.ChangeRule: {
+          return [];
+        }
+        default:
+          throw Error('Execute wallet is error');
       }
 
-      await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
+      // // Debug log removed
 
-      return sendResult.signature;
+      // const serialized = executeTransaction
+      //   .serialize({
+      //     verifySignatures: false,
+      //     requireAllSignatures: false,
+      //   })
+      //   .toString('base64');
+
+      // const { result: sendResult, error: sendError } = await signAndSendTxn({
+      //   base64EncodedTransaction: serialized,
+      //   relayerUrl: config.paymasterUrl,
+      // });
+
+      // if (sendError) {
+      //   logger.error('Execute wallet relayer error:', sendError, {
+      //     paymasterUrl: config.paymasterUrl,
+      //     smartWallet: data.smartWallet,
+      //   });
+      //   throw new Error(`Execute wallet relayer error: ${JSON.stringify(sendError)}`);
+      // }
+
+      // await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
+
+      // return sendResult.signature;
     } catch (error: unknown) {
       logger.error('ExecuteWallet action failed:', error, {
         smartWallet: data.smartWallet,
-        instruction: txnIns.programId.toString(),
       });
       const err = error instanceof Error ? error : new Error(String(error));
       throw err;

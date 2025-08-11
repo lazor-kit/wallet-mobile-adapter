@@ -20,7 +20,9 @@ import {
   WalletConnectionError,
   SigningError,
 } from './types';
-import { LazorKitProgram } from './anchor/interface/lazorkit';
+import { LazorkitClient, MessageArgs } from './contract-integration';
+import { buildExecuteMessage } from './contract-integration/messages';
+import { getFeePayer } from './core/paymaster';
 
 /**
  * Connects to the wallet
@@ -105,7 +107,7 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
 export const signMessageAction = async (
   get: () => WalletState,
   set: (state: Partial<WalletState>) => void,
-  txnIns: anchor.web3.TransactionInstruction,
+  action: MessageArgs,
   options: SignOptions
 ) => {
   const { isSigning, connection, wallet, config } = get();
@@ -130,13 +132,16 @@ export const signMessageAction = async (
   set({ isSigning: true, error: null });
 
   try {
-    const lazorProgram = new LazorKitProgram(connection);
-    const message = await lazorProgram.getMessage(
-      wallet.smartWallet,
-      options.ruleIns,
-      txnIns,
-      options.action
-    );
+    const lazorProgram = new LazorkitClient(connection);
+
+    const feePayer = await getFeePayer(config.paymasterUrl);
+
+    const message = await lazorProgram.buildMessage({
+      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
+      action,
+      passkeyPubkey: wallet.passkeyPubkey,
+      payer: feePayer,
+    });
 
     const encodedChallenge = Buffer.from(message)
       .toString('base64')
@@ -163,8 +168,9 @@ export const signMessageAction = async (
 
           const txnSignature = await walletActions.executeWallet(
             wallet,
+            feePayer,
+            action,
             browserResult,
-            txnIns,
             options
           );
           options?.onSuccess?.(txnSignature);
@@ -184,7 +190,6 @@ export const signMessageAction = async (
   } catch (error: unknown) {
     logger.error('Sign message action failed:', error, {
       smartWallet: wallet?.smartWallet,
-      instruction: txnIns.programId.toString(),
       redirectUrl: options.redirectUrl,
     });
     const err = error instanceof Error ? error : new SigningError('Unknown error');

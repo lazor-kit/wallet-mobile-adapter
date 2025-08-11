@@ -49,4 +49,4 @@ export const handleAuthRedirect = (url: string): WalletInfo | null => {
     logger.error('Failed to parse redirect URL:', err, { url });
     return null;
   }
-}; 
+};

@@ -42,4 +42,4 @@ export const handleBrowserResult = (url: string): BrowserResult => {
     logger.error('Failed to handle browser result:', error, { url });
     throw error;
   }
-}; 
+};

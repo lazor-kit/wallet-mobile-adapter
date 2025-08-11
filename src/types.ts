@@ -1,6 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import React from 'react';
-import { ExecuteAction, ExecuteActionType } from './anchor/types';
+import { MessageArgs } from './contract-integration';
 
 /**
  * Core wallet types
@@ -63,10 +63,7 @@ export interface DisconnectOptions {
 
 export interface SignOptions {
   readonly redirectUrl: string;
-  readonly action?: ExecuteActionType;
-  readonly ruleIns?: anchor.web3.TransactionInstruction;
-  readonly createNewPasskey?: number[];
-  readonly onSuccess?: (signature: string) => void;
+  readonly onSuccess?: (signature: any) => void;
   readonly onFail?: (error: Error) => void;
 }
 
@@ -98,10 +95,7 @@ export interface WalletState {
   // Actions
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: () => Promise<void>;
-  signMessage: (
-    transaction: anchor.web3.TransactionInstruction,
-    options: SignOptions
-  ) => Promise<void>;
+  signMessage: (action: MessageArgs, options: SignOptions) => Promise<void>;
 }
 
 /**
@@ -118,10 +112,7 @@ export interface LazorWalletHook {
   connection: anchor.web3.Connection;
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: (options?: DisconnectOptions) => Promise<void>;
-  signMessage: (
-    transaction: anchor.web3.TransactionInstruction,
-    options: SignOptions
-  ) => Promise<string>;
+  signMessage: (action: MessageArgs, options: SignOptions) => Promise<string>;
 }
 
 /**
@@ -131,10 +122,11 @@ export interface WalletActions {
   saveWallet: (data: WalletInfo) => Promise<WalletInfo>;
   executeWallet: (
     data: WalletInfo,
+    feePayer: anchor.web3.PublicKey,
+    action: MessageArgs,
     browserResult: BrowserResult,
-    txnIns: anchor.web3.TransactionInstruction,
     signOptions: SignOptions
-  ) => Promise<string>;
+  ) => Promise<Array<anchor.web3.VersionedTransaction>>;
 }
 
 /**

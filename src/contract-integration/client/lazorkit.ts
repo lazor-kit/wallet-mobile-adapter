@@ -317,9 +317,9 @@ export class LazorkitClient {
     const authenticatorDataRaw = Buffer.from(params.authenticatorDataRaw64, 'base64');
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');
     const verifyIx = buildSecp256r1VerifyIx(
-      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.hex(clientDataJsonRaw), 'hex')]),
-      Buffer.from(params.passkeyPubkey),
-      Buffer.from(params.signature64)
+      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.arrayBuffer(clientDataJsonRaw))]),
+      params.passkeyPubkey,
+      Buffer.from(params.signature64, 'base64')
     );
 
     let ruleInstruction = await this.defaultRuleProgram.buildCheckRuleIx(
@@ -366,9 +366,9 @@ export class LazorkitClient {
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');
 
     const verifyIx = buildSecp256r1VerifyIx(
-      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.hex(clientDataJsonRaw), 'hex')]),
-      Buffer.from(params.passkeyPubkey),
-      Buffer.from(params.signature64)
+      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.arrayBuffer(clientDataJsonRaw))]),
+      params.passkeyPubkey,
+      Buffer.from(params.signature64, 'base64')
     );
 
     const ix = await this.buildCallRuleDirectIx(
@@ -412,9 +412,9 @@ export class LazorkitClient {
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');
 
     const verifyIx = buildSecp256r1VerifyIx(
-      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.hex(clientDataJsonRaw), 'hex')]),
-      Buffer.from(params.passkeyPubkey),
-      Buffer.from(params.signature64)
+      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.arrayBuffer(clientDataJsonRaw))]),
+      params.passkeyPubkey,
+      Buffer.from(params.signature64, 'base64')
     );
 
     const ix = await this.buildChangeRuleDirectIx(
@@ -456,9 +456,9 @@ export class LazorkitClient {
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');
 
     const verifyIx = buildSecp256r1VerifyIx(
-      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.hex(clientDataJsonRaw), 'hex')]),
-      Buffer.from(params.passkeyPubkey),
-      Buffer.from(params.signature64)
+      Buffer.concat([authenticatorDataRaw, Buffer.from(sha256.arrayBuffer(clientDataJsonRaw))]),
+      params.passkeyPubkey,
+      Buffer.from(params.signature64, 'base64')
     );
 
     let ruleInstruction = await this.defaultRuleProgram.buildCheckRuleIx(
@@ -574,8 +574,8 @@ export class LazorkitClient {
     payer: PublicKey;
     smartWallet: PublicKey;
     passkeyPubkey: number[];
-  }): Promise<Buffer<ArrayBufferLike>> {
-    let message: Buffer<ArrayBufferLike>;
+  }): Promise<Buffer> {
+    let message: Buffer;
 
     const { action, payer, smartWallet, passkeyPubkey } = params;
 

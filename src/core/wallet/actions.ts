@@ -125,7 +125,7 @@ export const createWalletActions = (
             ruleInstruction,
           });
           if (true) {
-            const commitCpiTxn = await lazorProgram.commitCpiTx({
+            const commitCpiTx = await lazorProgram.commitCpiTx({
               passkeyPubkey: data.passkeyPubkey,
               smartWallet: new anchor.web3.PublicKey(data.smartWallet),
               clientDataJsonRaw64: browserResult.clientDataJsonBase64,
@@ -136,17 +136,13 @@ export const createWalletActions = (
               expiresAt: Math.floor(Date.now() / 1000) + 30,
             });
 
-            logger.log('commitCpiTxn', commitCpiTxn.serialize().length);
-
-            const executeTransaction = await lazorProgram.executeCommitedTx({
+            const executeCommitedTx = await lazorProgram.executeCommitedTx({
               payer: feePayer,
               smartWallet: new anchor.web3.PublicKey(data.smartWallet),
               cpiInstruction,
             });
 
-            logger.log('executeTransaction', executeTransaction.serialize().length);
-
-            return [commitCpiTxn, executeTransaction];
+            return [commitCpiTx, executeCommitedTx];
           }
         }
         case SmartWalletAction.CallRule: {

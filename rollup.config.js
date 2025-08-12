@@ -2,8 +2,8 @@ const typescript = require('rollup-plugin-typescript2');
 const json = require('@rollup/plugin-json');
 const resolve = require('@rollup/plugin-node-resolve');
 const dts = require('rollup-plugin-dts');
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import commonjs from '@rollup/plugin-commonjs';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 
 // Main build
 const mainConfig = {
@@ -23,6 +23,7 @@ const mainConfig = {
   external: [
     'react',
     'react-native',
+    'react-dom',
     '@coral-xyz/anchor',
     '@react-native-async-storage/async-storage',
     'expo-web-browser',

@@ -1,28 +1,13 @@
 /**
  * LazorKit Wallet Mobile Adapter - React Hook
- *
- * This file contains the React hook for LazorKit wallet integration.
- * Provides a clean interface over the Zustand store for React components.
  */
 
 import * as anchor from '@coral-xyz/anchor';
-import { useWalletStore } from './wallet-store';
-import {
-  ConnectOptions,
-  DisconnectOptions,
-  LazorWalletHook,
-  SignOptions,
-} from './types';
-import { logger } from './utils';
+import { useWalletStore } from './store';
+import { ConnectOptions, DisconnectOptions, LazorWalletHook, SignOptions } from '../types';
+import { logger } from '../core/logger';
+import { MessageArgs } from '../contract-integration';
 
-/**
- * Hook that manages the LazorKit wallet flow
- * 
- * This hook provides access to wallet state and operations including
- * connection, disconnection, and transaction signing through smart wallets.
- * 
- * @returns LazorWalletHook interface with wallet state and methods
- */
 export function useLazorWallet(): LazorWalletHook {
   const {
     wallet,
@@ -38,7 +23,6 @@ export function useLazorWallet(): LazorWalletHook {
 
   const handleConnect = async (connectOptions: ConnectOptions) => {
     try {
-      logger.log('Hook connect initiated', { redirectUrl: connectOptions.redirectUrl });
       const result = await connect(connectOptions);
       connectOptions?.onSuccess?.(result);
       return result;
@@ -52,10 +36,8 @@ export function useLazorWallet(): LazorWalletHook {
 
   const handleDisconnect = async (disconnectOptions?: DisconnectOptions) => {
     try {
-      logger.log('Hook disconnect initiated');
       await disconnect();
       disconnectOptions?.onSuccess?.();
-      logger.log('Hook disconnect completed');
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       logger.error('Hook disconnect failed:', err);
@@ -64,30 +46,18 @@ export function useLazorWallet(): LazorWalletHook {
     }
   };
 
-  const handleSignMessage = (
-    txnIns: anchor.web3.TransactionInstruction,
-    signOptions: SignOptions
-  ): Promise<string> => {
+  const handleSignMessage = (action: MessageArgs, signOptions: SignOptions): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       try {
-        logger.log('Hook signMessage initiated', { 
-          instruction: txnIns.programId.toString(),
-          redirectUrl: signOptions.redirectUrl 
-        });
-        
-        signMessage(txnIns, {
+        signMessage(action, {
           redirectUrl: signOptions.redirectUrl,
           onSuccess: (signature) => {
-            logger.log('Hook signMessage completed', { signature });
-            // Forward to consumer callback first
             signOptions?.onSuccess?.(signature);
-            // Resolve promise with the actual result AFTER tx is sent
             resolve(signature);
           },
           onFail: (error) => {
-            logger.error('Hook signMessage failed:', error, { 
-              instruction: txnIns.programId.toString(),
-              redirectUrl: signOptions.redirectUrl 
+            logger.error('Hook signMessage failed:', error, {
+              redirectUrl: signOptions.redirectUrl,
             });
             signOptions?.onFail?.(error);
             reject(error);
@@ -95,9 +65,8 @@ export function useLazorWallet(): LazorWalletHook {
         });
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
-        logger.error('Hook signMessage initialization failed:', err, { 
-          instruction: txnIns.programId.toString(),
-          redirectUrl: signOptions.redirectUrl 
+        logger.error('Hook signMessage initialization failed:', err, {
+          redirectUrl: signOptions.redirectUrl,
         });
         signOptions?.onFail?.(err);
         reject(err);
@@ -106,9 +75,8 @@ export function useLazorWallet(): LazorWalletHook {
   };
 
   return {
-    smartWalletPubkey: wallet?.smartWallet
-      ? new anchor.web3.PublicKey(wallet.smartWallet)
-      : null,
+    smartWalletPubkey: wallet?.smartWallet ? new anchor.web3.PublicKey(wallet.smartWallet) : null,
+    passkeyPubkey: wallet?.passkeyPubkey || null,
     isConnected: !!wallet,
     isLoading,
     isConnecting,
@@ -119,4 +87,4 @@ export function useLazorWallet(): LazorWalletHook {
     disconnect: handleDisconnect,
     signMessage: handleSignMessage,
   };
-} 
+}

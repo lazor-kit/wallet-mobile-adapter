@@ -26,8 +26,15 @@ import { sha256 } from 'js-sha256';
 import * as types from '../types';
 import { DefaultRuleClient } from './defaultRule';
 import * as bs58 from 'bs58';
-import { Buffer } from 'buffer';
 import { buildCallRuleMessage, buildChangeRuleMessage, buildExecuteMessage } from '../messages';
+import { Buffer } from 'buffer';
+global.Buffer = Buffer;
+
+Buffer.prototype.subarray = function subarray(begin: number | undefined, end: number | undefined) {
+  const result = Uint8Array.prototype.subarray.apply(this, [begin, end]);
+  Object.setPrototypeOf(result, Buffer.prototype); // Explicitly add the `Buffer` prototype (adds `readUIntLE`!)
+  return result;
+};
 
 export class LazorkitClient {
   readonly connection: Connection;
@@ -311,7 +318,7 @@ export class LazorkitClient {
     signature64: String;
     clientDataJsonRaw64: String;
     authenticatorDataRaw64: String;
-    ruleInstruction?: TransactionInstruction;
+    ruleInstruction: TransactionInstruction | null;
     cpiInstruction: TransactionInstruction;
   }): Promise<VersionedTransaction> {
     const authenticatorDataRaw = Buffer.from(params.authenticatorDataRaw64, 'base64');
@@ -449,7 +456,7 @@ export class LazorkitClient {
     signature64: String;
     clientDataJsonRaw64: String;
     authenticatorDataRaw64: String;
-    ruleInstruction?: TransactionInstruction;
+    ruleInstruction: TransactionInstruction | null;
     expiresAt: number;
   }) {
     const authenticatorDataRaw = Buffer.from(params.authenticatorDataRaw64, 'base64');

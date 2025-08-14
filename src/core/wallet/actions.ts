@@ -121,8 +121,8 @@ export const createWalletActions = (
             authenticatorDataRaw64: browserResult.authenticatorDataBase64,
             signature64: browserResult.signature,
             payer: feePayer,
-            cpiInstruction,
             ruleInstruction,
+            cpiInstruction,
           });
           if (true) {
             const commitCpiTx = await lazorProgram.commitCpiTx({
@@ -143,6 +143,8 @@ export const createWalletActions = (
             });
 
             return [commitCpiTx, executeCommitedTx];
+          } else {
+            return [executeTransaction];
           }
         }
         case SmartWalletAction.CallRule: {

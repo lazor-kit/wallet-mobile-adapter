@@ -137,8 +137,8 @@ export const signMessageAction = async (
     const feePayer = await getFeePayer(config.paymasterUrl);
 
     const message = await lazorProgram.buildMessage({
-      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
       action,
+      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
       passkeyPubkey: wallet.passkeyPubkey,
       payer: feePayer,
     });

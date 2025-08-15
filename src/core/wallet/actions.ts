@@ -148,39 +148,42 @@ export const createWalletActions = (
           }
         }
         case SmartWalletAction.CallRule: {
-          return [];
+          const { ruleInstruction, newAuthenticator } =
+            action.args as ArgsByAction[SmartWalletAction.CallRule];
+
+          const callRuleTx = await lazorProgram.callRuleDirectTx({
+            payer: feePayer,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            passkeyPubkey: data.passkeyPubkey,
+            signature64: browserResult.signature,
+            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+            ruleInstruction: ruleInstruction,
+            newAuthenticator,
+          });
+          return [callRuleTx];
         }
         case SmartWalletAction.ChangeRule: {
-          return [];
+          const { destroyRuleIns, initRuleIns, newAuthenticator } =
+            action.args as ArgsByAction[SmartWalletAction.ChangeRule];
+
+          const changeRuleTx = await lazorProgram.changeRuleDirectTx({
+            payer: feePayer,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            passkeyPubkey: data.passkeyPubkey,
+            signature64: browserResult.signature,
+            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+            destroyRuleInstruction: destroyRuleIns,
+            initRuleInstruction: initRuleIns,
+            newAuthenticator,
+          });
+
+          return [changeRuleTx];
         }
         default:
           throw Error('Execute wallet is error');
       }
-
-      // // Debug log removed
-
-      // const serialized = executeTransaction
-      //   .serialize({
-      //     verifySignatures: false,
-      //     requireAllSignatures: false,
-      //   })
-      //   .toString('base64');
-
-      // const { result: sendResult, error: sendError } = await signAndSendTxn({
-      //   base64EncodedTransaction: serialized,
-      //   relayerUrl: config.paymasterUrl,
-      // });
-
-      // if (sendError) {
-      //   logger.error('Execute wallet relayer error:', sendError, {
-      //     paymasterUrl: config.paymasterUrl,
-      //     smartWallet: data.smartWallet,
-      //   });
-      //   throw new Error(`Execute wallet relayer error: ${JSON.stringify(sendError)}`);
-      // }
-
-      // await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
-
       // return sendResult.signature;
     } catch (error: unknown) {
       logger.error('ExecuteWallet action failed:', error, {

@@ -147,6 +147,7 @@ export class LazorkitClient {
         signer: payer,
         smartWallet,
         smartWalletConfig: this.smartWalletConfigPda(smartWallet),
+        whitelistRulePrograms: this.whitelistRuleProgramsPda(),
         smartWalletAuthenticator,
         config: this.configPda(),
         defaultRuleProgram: this.defaultRuleProgram.programId,
@@ -362,12 +363,11 @@ export class LazorkitClient {
     signature64: String;
     clientDataJsonRaw64: String;
     authenticatorDataRaw64: String;
-    ruleProgram: PublicKey;
     ruleInstruction: TransactionInstruction;
-    newAuthenticator?: {
+    newAuthenticator: {
       passkeyPubkey: number[];
       credentialIdBase64: string;
-    }; // optional
+    } | null;
   }): Promise<VersionedTransaction> {
     const authenticatorDataRaw = Buffer.from(params.authenticatorDataRaw64, 'base64');
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');
@@ -393,8 +393,7 @@ export class LazorkitClient {
             }
           : null,
         ruleData: params.ruleInstruction.data,
-        verifyInstructionIndex:
-          (params.newAuthenticator ? 1 : 0) + params.ruleInstruction.keys.length,
+        verifyInstructionIndex: 0,
       },
       params.ruleInstruction
     );
@@ -410,10 +409,10 @@ export class LazorkitClient {
     authenticatorDataRaw64: String;
     destroyRuleInstruction: TransactionInstruction;
     initRuleInstruction: TransactionInstruction;
-    newAuthenticator?: {
+    newAuthenticator: {
       passkeyPubkey: number[];
       credentialIdBase64: string;
-    }; // optional
+    } | null;
   }): Promise<VersionedTransaction> {
     const authenticatorDataRaw = Buffer.from(params.authenticatorDataRaw64, 'base64');
     const clientDataJsonRaw = Buffer.from(params.clientDataJsonRaw64, 'base64');

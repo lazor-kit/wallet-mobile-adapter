@@ -1,13 +1,13 @@
 # LazorKit Wallet Mobile Adapter
 
-A React Native adapter for LazorKit smart wallet with WebAuthn/passkey authentication on Solana.
+A React Native adapter for LazorKit smart wallet with WebAuthn/passkey authentication on Solana blockchain.
 
 ## 🚨 Security Notice
 
 This SDK handles sensitive wallet operations including:
 - WebAuthn/passkey authentication
 - Smart wallet creation and management
-- Transaction signing
+- Transaction signing and execution
 - Private key management
 
 **Always verify the authenticity of this package and review the source code before use in production applications.**
@@ -17,9 +17,11 @@ This SDK handles sensitive wallet operations including:
 - 🔐 **WebAuthn/Passkey Authentication**: Secure biometric authentication
 - 🧠 **Smart Wallet Management**: Create and manage smart wallets on Solana
 - 💰 **Paymaster Integration**: Transaction fee sponsorship
-- 📱 **React Native Support**: Native mobile integration
-- 🔄 **Persistent Storage**: Secure wallet state persistence
-- 🎯 **TypeScript Support**: Full type safety
+- 📱 **React Native Support**: Native mobile integration with Expo
+- 🔄 **Persistent Storage**: Secure wallet state persistence with AsyncStorage
+- 🎯 **TypeScript Support**: Full type safety and IntelliSense
+- 🏗️ **Anchor Integration**: Built on Solana's Anchor framework
+- 📦 **Modular Architecture**: Clean separation of concerns
 
 ## Installation
 
@@ -34,7 +36,11 @@ This package requires the following peer dependencies:
 ```json
 {
   "react": ">=18.0.0",
-  "react-native": ">=0.70.0"
+  "react-native": ">=0.70.0",
+  "@coral-xyz/anchor": "0.31.1",
+  "expo-web-browser": "^14.2.0",
+  "react-native-get-random-values": "^1.11.0",
+  "zustand": "^5.0.7"
 }
 ```
 
@@ -66,8 +72,12 @@ import { useLazorWallet } from '@lazorkit/wallet-mobile-adapter';
 
 function WalletComponent() {
   const {
+    smartWalletPubkey,
+    passkeyPubkey,
     isConnected,
     isLoading,
+    isConnecting,
+    isSigning,
     connect,
     disconnect,
     signMessage,
@@ -95,8 +105,8 @@ function WalletComponent() {
       {isConnected ? (
         <button onClick={disconnect}>Disconnect</button>
       ) : (
-        <button onClick={handleConnect} disabled={isLoading}>
-          {isLoading ? 'Connecting...' : 'Connect Wallet'}
+        <button onClick={handleConnect} disabled={isConnecting}>
+          {isConnecting ? 'Connecting...' : 'Connect Wallet'}
         </button>
       )}
       {error && <p>Error: {error.message}</p>}
@@ -136,6 +146,155 @@ function WalletComponent() {
 />
 ```
 
+## API Reference
+
+### Hooks
+
+#### `useLazorWallet()`
+Returns wallet state and methods.
+
+**Returns:**
+- `smartWalletPubkey: PublicKey | null` - Smart wallet public key
+- `passkeyPubkey: number[] | null` - Passkey public key bytes
+- `isConnected: boolean` - Wallet connection status
+- `isLoading: boolean` - Loading state
+- `isConnecting: boolean` - Connection in progress
+- `isSigning: boolean` - Signing in progress
+- `error: Error | null` - Current error state
+- `connection: Connection` - Solana connection instance
+- `connect(options: ConnectOptions)` - Connect to wallet
+- `disconnect(options?: DisconnectOptions)` - Disconnect wallet
+- `signMessage(action: MessageArgs, options: SignOptions)` - Sign transaction
+
+### Types
+
+#### `ConnectOptions`
+```typescript
+interface ConnectOptions {
+  redirectUrl: string;
+  onSuccess?: (wallet: WalletInfo) => void;
+  onFail?: (error: Error) => void;
+}
+```
+
+#### `DisconnectOptions`
+```typescript
+interface DisconnectOptions {
+  onSuccess?: () => void;
+  onFail?: (error: Error) => void;
+}
+```
+
+#### `SignOptions`
+```typescript
+interface SignOptions {
+  redirectUrl: string;
+  onSuccess?: (signature: any) => void;
+  onFail?: (error: Error) => void;
+}
+```
+
+#### `WalletInfo`
+```typescript
+interface WalletInfo {
+  readonly credentialId: string;
+  readonly passkeyPubkey: number[];
+  readonly expo: string;
+  readonly platform: string;
+  readonly smartWallet: string;
+  readonly smartWalletAuthenticator: string;
+}
+```
+
+### Smart Wallet Actions
+
+The SDK supports three types of smart wallet actions:
+
+#### 1. Execute Transaction
+```typescript
+import { SmartWalletAction, MessageArgs } from '@lazorkit/wallet-mobile-adapter';
+
+const action: MessageArgs<SmartWalletAction.ExecuteTx> = {
+  type: SmartWalletAction.ExecuteTx,
+  args: {
+    ruleInstruction: null, // Optional rule instruction
+    cpiInstruction: transactionInstruction // Your transaction instruction
+  }
+};
+```
+
+#### 2. Call Rule
+```typescript
+const action: MessageArgs<SmartWalletAction.CallRule> = {
+  type: SmartWalletAction.CallRule,
+  args: {
+    ruleInstruction: ruleTransactionInstruction,
+    newPasskey: newPasskeyBytes
+  }
+};
+```
+
+#### 3. Change Rule
+```typescript
+const action: MessageArgs<SmartWalletAction.ChangeRule> = {
+  type: SmartWalletAction.ChangeRule,
+  args: {
+    destroyRuleIns: destroyRuleInstruction,
+    initRuleIns: initRuleInstruction,
+    newPasskey: newPasskeyBytes
+  }
+};
+```
+
+### Contract Integration
+
+The SDK exports contract integration utilities:
+
+```typescript
+import { 
+  LazorkitClient, 
+  DefaultRuleClient,
+  SmartWalletConfig,
+  SmartWalletAuthenticator 
+} from '@lazorkit/wallet-mobile-adapter';
+
+// Use LazorkitClient for smart wallet operations
+const client = new LazorkitClient(connection, wallet);
+
+// Use DefaultRuleClient for rule operations
+const ruleClient = new DefaultRuleClient(connection, wallet);
+```
+
+## Error Handling
+
+The SDK provides specific error classes for different scenarios:
+
+```typescript
+import { 
+  LazorKitError, 
+  WalletConnectionError, 
+  SigningError 
+} from '@lazorkit/wallet-mobile-adapter';
+
+try {
+  await connect(options);
+} catch (error) {
+  if (error instanceof WalletConnectionError) {
+    // Handle connection-specific errors
+    console.error('Connection error:', error.message);
+  } else if (error instanceof SigningError) {
+    // Handle signing-specific errors
+    console.error('Signing error:', error.message);
+  } else if (error instanceof LazorKitError) {
+    // Handle general LazorKit errors
+    console.error('LazorKit error:', error.message);
+  } else {
+    // Handle unexpected errors
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
 ## Security Best Practices
 
 ### 1. URL Verification
@@ -154,88 +313,28 @@ Use environment variables for sensitive configuration:
 />
 ```
 
-### 3. Error Handling
-Implement proper error handling for wallet operations:
-
-```tsx
-import { LazorKitError, WalletConnectionError, SigningError } from '@lazorkit/wallet-mobile-adapter';
-
-try {
-  await connect(options);
-} catch (error) {
-  if (error instanceof WalletConnectionError) {
-    // Handle connection-specific errors
-  } else if (error instanceof SigningError) {
-    // Handle signing-specific errors
-  } else if (error instanceof LazorKitError) {
-    // Handle general LazorKit errors
-  } else {
-    // Handle unexpected errors
-  }
-}
-```
-
-### 4. Debug Mode
+### 3. Debug Mode
 Only enable debug mode in development:
 
 ```tsx
 <LazorKitProvider isDebug={__DEV__}>
 ```
 
-## API Reference
+### 4. Error Handling
+Implement proper error handling for all wallet operations:
 
-### Hooks
-
-#### `useLazorWallet()`
-Returns wallet state and methods.
-
-**Returns:**
-- `isConnected: boolean` - Wallet connection status
-- `isLoading: boolean` - Loading state
-- `isConnecting: boolean` - Connection in progress
-- `isSigning: boolean` - Signing in progress
-- `error: Error | null` - Current error state
-- `connect(options: ConnectOptions)` - Connect to wallet
-- `disconnect(options?: DisconnectOptions)` - Disconnect wallet
-- `signMessage(transaction, options: SignOptions)` - Sign transaction
-
-### Types
-
-#### `ConnectOptions`
-```typescript
-interface ConnectOptions {
-  redirectUrl: string;
-  onSuccess?: (wallet: WalletInfo) => void;
-  onFail?: (error: Error) => void;
-}
-```
-
-#### `SignOptions`
-```typescript
-interface SignOptions {
-  redirectUrl: string;
-  onSuccess?: (signature: string) => void;
-  onFail?: (error: Error) => void;
-}
-```
-
-## Error Handling
-
-The SDK provides specific error classes for different scenarios:
-
-```typescript
-import { 
-  LazorKitError, 
-  WalletConnectionError, 
-  SigningError 
-} from '@lazorkit/wallet-mobile-adapter';
-
-// Check error types
-if (error instanceof WalletConnectionError) {
-  // Handle connection errors
-} else if (error instanceof SigningError) {
-  // Handle signing errors
-}
+```tsx
+const handleSignMessage = async (action: MessageArgs) => {
+  try {
+    const signature = await signMessage(action, {
+      redirectUrl: 'your-app://sign-callback',
+      onSuccess: (sig) => console.log('Signed:', sig),
+      onFail: (error) => console.error('Sign failed:', error)
+    });
+  } catch (error) {
+    console.error('Sign error:', error);
+  }
+};
 ```
 
 ## Troubleshooting
@@ -245,14 +344,21 @@ if (error instanceof WalletConnectionError) {
 1. **"Cannot resolve module" errors**
    - Ensure all peer dependencies are installed
    - Check React Native version compatibility
+   - Verify Expo SDK version compatibility
 
 2. **WebAuthn not working**
    - Verify HTTPS is enabled (required for WebAuthn)
    - Check browser compatibility
+   - Ensure proper redirect URL configuration
 
 3. **Transaction signing fails**
    - Verify paymaster service is accessible
    - Check network connectivity
+   - Ensure proper MessageArgs structure
+
+4. **Buffer polyfill issues**
+   - The SDK automatically includes Buffer polyfills
+   - Ensure `react-native-get-random-values` is installed
 
 ### Debug Mode
 
@@ -260,6 +366,19 @@ Enable debug logging to troubleshoot issues:
 
 ```tsx
 <LazorKitProvider isDebug={true}>
+```
+
+## Architecture
+
+The SDK is built with a modular architecture:
+
+```
+src/
+├── react/           # React components and hooks
+├── core/            # Core wallet functionality
+├── contract-integration/  # Anchor contract integration
+├── config/          # Configuration and defaults
+└── types.ts         # TypeScript type definitions
 ```
 
 ## Contributing

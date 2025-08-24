@@ -12,7 +12,7 @@ import { WalletState, WalletInfo, WalletConfig, ConnectOptions, SignOptions } fr
 import { DEFAULT_COMMITMENT, DEFAULTS, STORAGE_KEYS } from '../config';
 import { logger } from '../core/logger';
 import { connectAction, disconnectAction, signMessageAction } from '../actions';
-import { MessageArgs } from '../contract-integration';
+import { SmartWalletActionArgs } from '../contract-integration';
 
 // AsyncStorage dynamic import remains unchanged
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +135,7 @@ export const useWalletStore = create<WalletState>()(
 
       connect: (options: ConnectOptions) => connectAction(get, set, options),
       disconnect: () => disconnectAction(set),
-      signMessage: (action: MessageArgs, options: SignOptions) =>
+      signMessage: (action: SmartWalletActionArgs, options: SignOptions) =>
         signMessageAction(get, set, action, options),
     }),
     {

@@ -1,6 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import React from 'react';
-import { MessageArgs } from './contract-integration';
+import { SmartWalletActionArgs } from './contract-integration';
 
 /**
  * Core wallet types
@@ -11,7 +11,7 @@ export interface WalletInfo {
   readonly expo: string;
   readonly platform: string;
   readonly smartWallet: string;
-  readonly smartWalletAuthenticator: string;
+  readonly walletDevice: string;
 }
 
 export interface WalletConfig {
@@ -95,7 +95,7 @@ export interface WalletState {
   // Actions
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: () => Promise<void>;
-  signMessage: (action: MessageArgs, options: SignOptions) => Promise<void>;
+  signMessage: (action: SmartWalletActionArgs, options: SignOptions) => Promise<void>;
 }
 
 /**
@@ -112,7 +112,7 @@ export interface LazorWalletHook {
   connection: anchor.web3.Connection;
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: (options?: DisconnectOptions) => Promise<void>;
-  signMessage: (action: MessageArgs, options: SignOptions) => Promise<string>;
+  signMessage: (action: SmartWalletActionArgs, options: SignOptions) => Promise<string>;
 }
 
 /**
@@ -123,7 +123,7 @@ export interface WalletActions {
   executeWallet: (
     data: WalletInfo,
     feePayer: anchor.web3.PublicKey,
-    action: MessageArgs,
+    action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     signOptions: SignOptions
   ) => Promise<Array<anchor.web3.VersionedTransaction>>;

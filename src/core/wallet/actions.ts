@@ -11,7 +11,7 @@ import { WalletInfo, BrowserResult, WalletActions, SignOptions } from '../../typ
 import {
   ArgsByAction,
   LazorkitClient,
-  MessageArgs,
+  SmartWalletActionArgs,
   SmartWalletAction,
 } from '../../contract-integration';
 import { getFeePayer, signAndSendTxn } from '../paymaster';
@@ -36,11 +36,11 @@ export const createWalletActions = (
 
     try {
       // Debug log removed
-      let { smartWallet, smartWalletAuthenticator } = await lazorProgram.getSmartWalletByPasskey(
+      let { smartWallet, walletDevice } = await lazorProgram.getSmartWalletByPasskey(
         data.passkeyPubkey
       );
 
-      if (!smartWallet || !smartWalletAuthenticator) {
+      if (!smartWallet || !walletDevice) {
         // Debug log removed
 
         const feePayer = await getFeePayer(config.paymasterUrl);
@@ -71,9 +71,9 @@ export const createWalletActions = (
 
         const fetched = await lazorProgram.getSmartWalletByPasskey(data.passkeyPubkey);
         smartWallet = fetched.smartWallet;
-        smartWalletAuthenticator = fetched.smartWalletAuthenticator;
+        walletDevice = fetched.walletDevice;
 
-        if (!smartWallet || !smartWalletAuthenticator) {
+        if (!smartWallet || !walletDevice) {
           logger.error('Failed to create smart wallet on chain after transaction confirmed', {
             signature: sendResult.signature,
             passkeyPubkey: data.passkeyPubkey,
@@ -86,7 +86,7 @@ export const createWalletActions = (
       return {
         ...data,
         smartWallet: smartWallet.toString(),
-        smartWalletAuthenticator: smartWalletAuthenticator.toString(),
+        walletDevice: walletDevice.toString(),
       };
     } catch (error) {
       logger.error('SaveWallet action failed:', error, { walletData: data });
@@ -103,40 +103,44 @@ export const createWalletActions = (
   const executeWallet = async (
     data: WalletInfo,
     feePayer: anchor.web3.PublicKey,
-    action: MessageArgs,
+    action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     _options: SignOptions
   ): Promise<Array<anchor.web3.VersionedTransaction>> => {
     setLoading(true);
     try {
       switch (action.type) {
-        case SmartWalletAction.ExecuteTx: {
-          const { ruleInstruction, cpiInstruction } =
-            action.args as ArgsByAction[SmartWalletAction.ExecuteTx];
+        case SmartWalletAction.ExecuteTransaction: {
+          const { policyInstruction, cpiInstruction } =
+            action.args as ArgsByAction[SmartWalletAction.ExecuteTransaction];
 
-          const executeTransaction = await lazorProgram.executeTxnDirectTx({
-            passkeyPubkey: data.passkeyPubkey,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            signature64: browserResult.signature,
+          const executeTransaction = await lazorProgram.executeTransactionWithAuth({
             payer: feePayer,
-            ruleInstruction,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            passkeySignature: {
+              passkeyPubkey: data.passkeyPubkey,
+              signature64: browserResult.signature,
+              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            },
+            policyInstruction,
             cpiInstruction,
           });
           if (true) {
-            const commitCpiTx = await lazorProgram.commitCpiTx({
-              passkeyPubkey: data.passkeyPubkey,
-              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-              signature64: browserResult.signature,
+            const commitCpiTx = await lazorProgram.createTransactionSessionWithAuth({
               payer: feePayer,
-              ruleInstruction,
+              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+              passkeySignature: {
+                passkeyPubkey: data.passkeyPubkey,
+                signature64: browserResult.signature,
+                clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+                authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+              },
+              policyInstruction,
               expiresAt: Math.floor(Date.now() / 1000) + 30,
             });
 
-            const executeCommitedTx = await lazorProgram.executeCommitedTx({
+            const executeCommitedTx = await lazorProgram.executeSessionTransaction({
               payer: feePayer,
               smartWallet: new anchor.web3.PublicKey(data.smartWallet),
               cpiInstruction,
@@ -147,36 +151,40 @@ export const createWalletActions = (
             return [executeTransaction];
           }
         }
-        case SmartWalletAction.CallRule: {
-          const { ruleInstruction, newAuthenticator } =
-            action.args as ArgsByAction[SmartWalletAction.CallRule];
+        case SmartWalletAction.InvokePolicy: {
+          const { policyInstruction, newWalletDevice } =
+            action.args as ArgsByAction[SmartWalletAction.InvokePolicy];
 
-          const callRuleTx = await lazorProgram.callRuleDirectTx({
+          const callRuleTx = await lazorProgram.invokePolicyWithAuth({
             payer: feePayer,
             smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeyPubkey: data.passkeyPubkey,
-            signature64: browserResult.signature,
-            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-            ruleInstruction: ruleInstruction,
-            newAuthenticator,
+            passkeySignature: {
+              passkeyPubkey: data.passkeyPubkey,
+              signature64: browserResult.signature,
+              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            },
+            policyInstruction,
+            newWalletDevice,
           });
           return [callRuleTx];
         }
-        case SmartWalletAction.ChangeRule: {
-          const { destroyRuleIns, initRuleIns, newAuthenticator } =
-            action.args as ArgsByAction[SmartWalletAction.ChangeRule];
+        case SmartWalletAction.UpdatePolicy: {
+          const { destroyPolicyIns, initPolicyIns, newWalletDevice } =
+            action.args as ArgsByAction[SmartWalletAction.UpdatePolicy];
 
-          const changeRuleTx = await lazorProgram.changeRuleDirectTx({
+          const changeRuleTx = await lazorProgram.updatePolicyWithAuth({
             payer: feePayer,
             smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeyPubkey: data.passkeyPubkey,
-            signature64: browserResult.signature,
-            authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-            destroyRuleInstruction: destroyRuleIns,
-            initRuleInstruction: initRuleIns,
-            newAuthenticator,
+            passkeySignature: {
+              passkeyPubkey: data.passkeyPubkey,
+              signature64: browserResult.signature,
+              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            },
+            destroyPolicyInstruction: destroyPolicyIns,
+            initPolicyInstruction: initPolicyIns,
+            newWalletDevice,
           });
 
           return [changeRuleTx];

@@ -29,16 +29,17 @@ This SDK handles sensitive wallet operations including:
 npm install @lazorkit/wallet-mobile-adapter
 ```
 
-### Peer Dependencies
+### Dependencies
 
-This package requires the following peer dependencies:
+This package includes the following dependencies:
 
 ```json
 {
-  "react": ">=18.0.0",
-  "react-native": ">=0.70.0",
   "@coral-xyz/anchor": "0.31.1",
+  "@react-native-async-storage/async-storage": "2.2.0",
+  "buffer": "6.0.3",
   "expo-web-browser": "^14.2.0",
+  "js-sha256": "0.11.1",
   "react-native-get-random-values": "^1.11.0",
   "zustand": "^5.0.7"
 }
@@ -164,7 +165,7 @@ Returns wallet state and methods.
 - `connection: Connection` - Solana connection instance
 - `connect(options: ConnectOptions)` - Connect to wallet
 - `disconnect(options?: DisconnectOptions)` - Disconnect wallet
-- `signMessage(action: MessageArgs, options: SignOptions)` - Sign transaction
+- `signMessage(action: SmartWalletActionArgs, options: SignOptions)` - Sign transaction
 
 ### Types
 
@@ -202,7 +203,7 @@ interface WalletInfo {
   readonly expo: string;
   readonly platform: string;
   readonly smartWallet: string;
-  readonly smartWalletAuthenticator: string;
+  readonly walletDevice: string;
 }
 ```
 
@@ -212,36 +213,42 @@ The SDK supports three types of smart wallet actions:
 
 #### 1. Execute Transaction
 ```typescript
-import { SmartWalletAction, MessageArgs } from '@lazorkit/wallet-mobile-adapter';
+import { SmartWalletAction, SmartWalletActionArgs } from '@lazorkit/wallet-mobile-adapter';
 
-const action: MessageArgs<SmartWalletAction.ExecuteTx> = {
-  type: SmartWalletAction.ExecuteTx,
+const action: SmartWalletActionArgs<SmartWalletAction.ExecuteTransaction> = {
+  type: SmartWalletAction.ExecuteTransaction,
   args: {
-    ruleInstruction: null, // Optional rule instruction
+    policyInstruction: null, // Optional policy instruction
     cpiInstruction: transactionInstruction // Your transaction instruction
   }
 };
 ```
 
-#### 2. Call Rule
+#### 2. Invoke Policy
 ```typescript
-const action: MessageArgs<SmartWalletAction.CallRule> = {
-  type: SmartWalletAction.CallRule,
+const action: SmartWalletActionArgs<SmartWalletAction.InvokePolicy> = {
+  type: SmartWalletAction.InvokePolicy,
   args: {
-    ruleInstruction: ruleTransactionInstruction,
-    newPasskey: newPasskeyBytes
+    policyInstruction: policyTransactionInstruction,
+    newWalletDevice: {
+      passkeyPubkey: newPasskeyBytes,
+      credentialIdBase64: newCredentialId
+    }
   }
 };
 ```
 
-#### 3. Change Rule
+#### 3. Update Policy
 ```typescript
-const action: MessageArgs<SmartWalletAction.ChangeRule> = {
-  type: SmartWalletAction.ChangeRule,
+const action: SmartWalletActionArgs<SmartWalletAction.UpdatePolicy> = {
+  type: SmartWalletAction.UpdatePolicy,
   args: {
-    destroyRuleIns: destroyRuleInstruction,
-    initRuleIns: initRuleInstruction,
-    newPasskey: newPasskeyBytes
+    destroyPolicyInstruction: destroyPolicyInstruction,
+    initPolicyInstruction: initPolicyInstruction,
+    newWalletDevice: {
+      passkeyPubkey: newPasskeyBytes,
+      credentialIdBase64: newCredentialId
+    }
   }
 };
 ```
@@ -253,16 +260,16 @@ The SDK exports contract integration utilities:
 ```typescript
 import { 
   LazorkitClient, 
-  DefaultRuleClient,
+  DefaultPolicyClient,
   SmartWalletConfig,
   SmartWalletAuthenticator 
 } from '@lazorkit/wallet-mobile-adapter';
 
 // Use LazorkitClient for smart wallet operations
-const client = new LazorkitClient(connection, wallet);
+const client = new LazorkitClient(connection);
 
-// Use DefaultRuleClient for rule operations
-const ruleClient = new DefaultRuleClient(connection, wallet);
+// Use DefaultPolicyClient for policy operations
+const policyClient = new DefaultPolicyClient(connection);
 ```
 
 ## Error Handling
@@ -324,7 +331,7 @@ Only enable debug mode in development:
 Implement proper error handling for all wallet operations:
 
 ```tsx
-const handleSignMessage = async (action: MessageArgs) => {
+const handleSignMessage = async (action: SmartWalletActionArgs) => {
   try {
     const signature = await signMessage(action, {
       redirectUrl: 'your-app://sign-callback',
@@ -342,7 +349,7 @@ const handleSignMessage = async (action: MessageArgs) => {
 ### Common Issues
 
 1. **"Cannot resolve module" errors**
-   - Ensure all peer dependencies are installed
+   - Ensure all dependencies are installed
    - Check React Native version compatibility
    - Verify Expo SDK version compatibility
 
@@ -354,7 +361,7 @@ const handleSignMessage = async (action: MessageArgs) => {
 3. **Transaction signing fails**
    - Verify paymaster service is accessible
    - Check network connectivity
-   - Ensure proper MessageArgs structure
+   - Ensure proper SmartWalletActionArgs structure
 
 4. **Buffer polyfill issues**
    - The SDK automatically includes Buffer polyfills

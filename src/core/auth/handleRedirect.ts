@@ -44,7 +44,7 @@ export const handleAuthRedirect = (url: string): WalletInfo | null => {
       expo: parsed.searchParams.get('expo') || '',
       platform: parsed.searchParams.get('platform') || '',
       smartWallet: '',
-      smartWalletAuthenticator: '',
+      walletDevice: '',
     };
   } catch (err) {
     logger.error('Failed to parse redirect URL:', err, { url });

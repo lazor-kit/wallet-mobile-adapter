@@ -20,8 +20,7 @@ import {
   WalletConnectionError,
   SigningError,
 } from './types';
-import { LazorkitClient, MessageArgs } from './contract-integration';
-import { buildExecuteMessage } from './contract-integration/messages';
+import { LazorkitClient, SmartWalletActionArgs } from './contract-integration';
 import { getFeePayer } from './core/paymaster';
 
 /**
@@ -107,7 +106,7 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
 export const signMessageAction = async (
   get: () => WalletState,
   set: (state: Partial<WalletState>) => void,
-  action: MessageArgs,
+  action: SmartWalletActionArgs,
   options: SignOptions
 ) => {
   const { isSigning, connection, wallet, config } = get();
@@ -137,8 +136,8 @@ export const signMessageAction = async (
     const feePayer = await getFeePayer(config.paymasterUrl);
 
     const message = await lazorProgram.buildMessage({
-      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
       action,
+      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
       passkeyPubkey: wallet.passkeyPubkey,
       payer: feePayer,
     });

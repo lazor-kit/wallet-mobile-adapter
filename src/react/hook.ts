@@ -6,7 +6,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { useWalletStore } from './store';
 import { ConnectOptions, DisconnectOptions, LazorWalletHook, SignOptions } from '../types';
 import { logger } from '../core/logger';
-import { MessageArgs } from '../contract-integration';
+import { SmartWalletActionArgs } from '../contract-integration';
 
 export function useLazorWallet(): LazorWalletHook {
   const {
@@ -46,7 +46,10 @@ export function useLazorWallet(): LazorWalletHook {
     }
   };
 
-  const handleSignMessage = (action: MessageArgs, signOptions: SignOptions): Promise<string> => {
+  const handleSignMessage = (
+    action: SmartWalletActionArgs,
+    signOptions: SignOptions
+  ): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       try {
         signMessage(action, {

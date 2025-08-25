@@ -40,7 +40,7 @@ export const openBrowser = async (url: string, redirectUrl: string): Promise<str
 
       const subscription = Linking.addEventListener('url', handleUrl);
 
-      WebBrowser.openBrowserAsync(url).catch((error) => {
+      WebBrowser.openBrowserAsync(url).catch((error: any) => {
         logger.error('Android browser open failed:', error, { url, redirectUrl });
         subscription.remove();
         reject(error);

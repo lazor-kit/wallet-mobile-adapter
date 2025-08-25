@@ -1,6 +1,6 @@
 {
   "name": "@lazorkit/wallet-mobile-adapter",
-  "version": "1.3.15",
+  "version": "1.3.30",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -44,49 +44,31 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "peerDependencies": {
-    "expo-web-browser": ">=14.0.0",
-    "react": ">=18.0.0",
-    "react-native": ">=0.70.0",
-    "react-native-get-random-values": ">=1.11.0",
-    "zustand": ">=5.0.0"
-  },
-  "peerDependenciesMeta": {
-    "react-native": {
-      "optional": true
-    },
-    "zustand": {
-      "optional": false
-    },
-    "expo-web-browser": {
-      "optional": false
-    },
-    "react-native-get-random-values": {
-      "optional": false
-    }
-  },
   "devDependencies": {
-    "@eslint/js": "9.28.0",
+    "@eslint/js": "9.33.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@types/bn.js": "^5.2.0",
     "@types/bs58": "4.0.4",
-    "@types/react": "19.1.8",
-    "eslint": "9.28.0",
+    "@types/react": "19.1.10",
+    "eslint": "9.33.0",
     "eslint-plugin-react": "7.37.5",
-    "globals": "16.2.0",
-    "rollup": "4.43.0",
+    "globals": "16.3.0",
+    "rollup": "4.46.0",
     "rollup-plugin-dts": "6.2.1",
     "rollup-plugin-peer-deps-external": "2.2.4",
     "rollup-plugin-typescript2": "0.36.0",
-    "typescript": "5.8.3",
-    "typescript-eslint": "8.34.0"
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.39.1"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "@rollup/plugin-commonjs": "28.0.3",
+    "@rollup/plugin-commonjs": "28.0.6",
     "buffer": "6.0.3",
-    "js-sha256": "0.11.1"
+    "expo-web-browser": "^14.2.0",
+    "js-sha256": "0.11.1",
+    "react-native-get-random-values": "^1.11.0",
+    "zustand": "^5.0.7"
   }
 }

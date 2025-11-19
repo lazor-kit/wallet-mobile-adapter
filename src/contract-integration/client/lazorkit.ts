@@ -1,43 +1,54 @@
-import { Program, BN } from '@coral-xyz/anchor';
-import {
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  Connection,
-  SystemProgram,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
-  VersionedTransaction,
-  AccountMeta,
-} from '@solana/web3.js';
+import * as anchor from '@coral-xyz/anchor';
 import LazorkitIdl from '../anchor/idl/lazorkit.json';
 import { Lazorkit } from '../anchor/types/lazorkit';
 import {
-  deriveConfigPda,
-  derivePolicyProgramRegistryPda,
-  deriveSmartWalletPda,
-  deriveSmartWalletDataPda,
-  deriveWalletDevicePda,
-  deriveTransactionSessionPda,
-} from '../pda/lazorkit';
-import { getRandomBytes, instructionToAccountMetas } from '../utils';
+  byteArrayEquals,
+  credentialHashFromBase64,
+  getRandomBytes,
+  instructionToAccountMetas,
+} from '../utils';
 import * as types from '../types';
 import { DefaultPolicyClient } from './defaultPolicy';
-import * as bs58 from 'bs58';
+import { WalletPdaFactory } from './internal/walletPdas';
+import { PolicyInstructionResolver } from './internal/policyResolver';
 import {
-  buildInvokePolicyMessage,
-  buildUpdatePolicyMessage,
-  buildExecuteMessage,
-} from '../messages';
+  calculateCpiHash,
+  calculateSplitIndex,
+  collectCpiAccountMetas,
+} from './internal/cpi';
+import * as bs58 from 'bs58';
+import { buildExecuteMessage, buildCreateChunkMessage } from '../messages';
 import { Buffer } from 'buffer';
 import {
   buildPasskeyVerificationInstruction,
   convertPasskeySignatureToInstructionArgs,
 } from '../auth';
 import {
-  buildVersionedTransaction,
-  buildLegacyTransaction,
+  buildTransaction,
   combineInstructionsWithAuth,
+  calculateVerifyInstructionIndex,
 } from '../transaction';
+import { EMPTY_PDA_RENT_EXEMPT_BALANCE } from '../constants';
+import {
+  assertValidPublicKey,
+  assertValidPasskeyPublicKey,
+  assertValidCredentialHash,
+  assertPositiveBN,
+  assertValidTransactionInstruction,
+  assertDefined,
+  ValidationError,
+  assertValidBase64,
+  assertPositiveInteger,
+  assertValidPublicKeyArray,
+  assertValidTransactionInstructionArray,
+} from '../validation';
+
+// Type aliases for convenience
+type PublicKey = anchor.web3.PublicKey;
+type TransactionInstruction = anchor.web3.TransactionInstruction;
+type Transaction = anchor.web3.Transaction;
+type VersionedTransaction = anchor.web3.VersionedTransaction;
+type BN = anchor.BN;
 
 global.Buffer = Buffer;
 
@@ -57,18 +68,25 @@ Buffer.prototype.subarray = function subarray(
  * transaction builders for common smart wallet operations.
  */
 export class LazorkitClient {
-  readonly connection: Connection;
-  readonly program: Program<Lazorkit>;
-  readonly programId: PublicKey;
+  readonly connection: anchor.web3.Connection;
+  readonly program: anchor.Program<Lazorkit>;
+  readonly programId: anchor.web3.PublicKey;
   readonly defaultPolicyProgram: DefaultPolicyClient;
+  private readonly walletPdas: WalletPdaFactory;
+  private readonly policyResolver: PolicyInstructionResolver;
 
-  constructor(connection: Connection) {
+  constructor(connection: anchor.web3.Connection) {
     this.connection = connection;
-    this.program = new Program<Lazorkit>(LazorkitIdl as Lazorkit, {
+    this.program = new anchor.Program<Lazorkit>(LazorkitIdl as Lazorkit, {
       connection: connection,
     });
-    this.defaultPolicyProgram = new DefaultPolicyClient(connection);
     this.programId = this.program.programId;
+    this.defaultPolicyProgram = new DefaultPolicyClient(connection);
+    this.walletPdas = new WalletPdaFactory(this.programId);
+    this.policyResolver = new PolicyInstructionResolver(
+      this.defaultPolicyProgram,
+      this.walletPdas
+    );
   }
 
   // ============================================================================
@@ -76,45 +94,39 @@ export class LazorkitClient {
   // ============================================================================
 
   /**
-   * Derives the program configuration PDA
-   */
-  configPda(): PublicKey {
-    return deriveConfigPda(this.programId);
-  }
-
-  /**
-   * Derives the policy program registry PDA
-   */
-  policyProgramRegistryPda(): PublicKey {
-    return derivePolicyProgramRegistryPda(this.programId);
-  }
-
-  /**
    * Derives a smart wallet PDA from wallet ID
    */
-  smartWalletPda(walletId: BN): PublicKey {
-    return deriveSmartWalletPda(this.programId, walletId);
+  getSmartWalletPubkey(walletId: BN): PublicKey {
+    return this.walletPdas.smartWallet(walletId);
   }
 
   /**
    * Derives the smart wallet data PDA for a given smart wallet
    */
-  smartWalletDataPda(smartWallet: PublicKey): PublicKey {
-    return deriveSmartWalletDataPda(this.programId, smartWallet);
+  getWalletStatePubkey(smartWallet: PublicKey): PublicKey {
+    return this.walletPdas.walletState(smartWallet);
   }
 
   /**
    * Derives a wallet device PDA for a given smart wallet and passkey
+   *
+   * @param smartWallet - Smart wallet PDA address
+   * @param credentialHash - Credential hash (32 bytes)
+   * @returns Wallet device PDA address
+   * @throws {ValidationError} if parameters are invalid
    */
-  walletDevicePda(smartWallet: PublicKey, passkey: number[]): PublicKey {
-    return deriveWalletDevicePda(this.programId, smartWallet, passkey)[0];
+  getWalletDevicePubkey(
+    smartWallet: PublicKey,
+    credentialHash: types.CredentialHash | number[]
+  ): PublicKey {
+    return this.walletPdas.walletDevice(smartWallet, credentialHash);
   }
 
   /**
    * Derives a transaction session PDA for a given smart wallet and nonce
    */
-  transactionSessionPda(smartWallet: PublicKey, lastNonce: BN): PublicKey {
-    return deriveTransactionSessionPda(this.programId, smartWallet, lastNonce);
+  getChunkPubkey(smartWallet: PublicKey, lastNonce: BN): PublicKey {
+    return this.walletPdas.chunk(smartWallet, lastNonce);
   }
 
   // ============================================================================
@@ -125,7 +137,135 @@ export class LazorkitClient {
    * Generates a random wallet ID
    */
   generateWalletId(): BN {
-    return new BN(getRandomBytes(8), 'le');
+    return new anchor.BN(getRandomBytes(8), 'le');
+  }
+
+  private async fetchWalletStateContext(smartWallet: PublicKey): Promise<{
+    walletState: PublicKey;
+    data: types.WalletState;
+  }> {
+    const walletState = this.getWalletStatePubkey(smartWallet);
+    const data = (await this.program.account.walletState.fetch(
+      walletState
+    )) as types.WalletState;
+    return { walletState, data };
+  }
+
+  private async fetchChunkContext(
+    smartWallet: PublicKey,
+    nonce: BN
+  ): Promise<{ chunk: PublicKey; data: types.Chunk }> {
+    const chunk = this.getChunkPubkey(smartWallet, nonce);
+    const data = (await this.program.account.chunk.fetch(chunk)) as types.Chunk;
+    return { chunk, data };
+  }
+
+  /**
+   * Validates CreateSmartWalletParams
+   */
+  private validateCreateSmartWalletParams(
+    params: types.CreateSmartWalletParams
+  ): void {
+    assertDefined(params, 'params');
+    assertValidPublicKey(params.payer, 'params.payer');
+    assertValidPasskeyPublicKey(
+      params.passkeyPublicKey,
+      'params.passkeyPublicKey'
+    );
+    assertValidBase64(params.credentialIdBase64, 'params.credentialIdBase64');
+
+    if (params.amount !== undefined) {
+      assertPositiveBN(params.amount, 'params.amount');
+    }
+    if (params.smartWalletId !== undefined) {
+      assertPositiveBN(params.smartWalletId, 'params.smartWalletId');
+    }
+    if (params.policyDataSize !== undefined) {
+      assertPositiveInteger(params.policyDataSize, 'params.policyDataSize');
+    }
+    if (
+      params.policyInstruction !== null &&
+      params.policyInstruction !== undefined
+    ) {
+      assertValidTransactionInstruction(
+        params.policyInstruction,
+        'params.policyInstruction'
+      );
+    }
+  }
+
+  /**
+   * Validates ExecuteParams
+   */
+  private validateExecuteParams(params: types.ExecuteParams): void {
+    assertDefined(params, 'params');
+    assertValidPublicKey(params.payer, 'params.payer');
+    assertValidPublicKey(params.smartWallet, 'params.smartWallet');
+    assertValidCredentialHash(params.credentialHash, 'params.credentialHash');
+    assertValidTransactionInstruction(
+      params.cpiInstruction,
+      'params.cpiInstruction'
+    );
+    assertPositiveBN(params.timestamp, 'params.timestamp');
+
+    if (params.policyInstruction !== null) {
+      assertValidTransactionInstruction(
+        params.policyInstruction,
+        'params.policyInstruction'
+      );
+    }
+  }
+
+  /**
+   * Validates CreateChunkParams
+   */
+  private validateCreateChunkParams(params: types.CreateChunkParams): void {
+    assertDefined(params, 'params');
+    assertValidPublicKey(params.payer, 'params.payer');
+    assertValidPublicKey(params.smartWallet, 'params.smartWallet');
+    assertValidCredentialHash(params.credentialHash, 'params.credentialHash');
+    assertValidTransactionInstructionArray(
+      params.cpiInstructions,
+      'params.cpiInstructions'
+    );
+    assertPositiveBN(params.timestamp, 'params.timestamp');
+
+    if (params.policyInstruction !== null) {
+      assertValidTransactionInstruction(
+        params.policyInstruction,
+        'params.policyInstruction'
+      );
+    }
+    if (params.cpiSigners !== undefined) {
+      assertValidPublicKeyArray(params.cpiSigners, 'params.cpiSigners');
+    }
+  }
+
+  /**
+   * Validates ExecuteChunkParams
+   */
+  private validateExecuteChunkParams(params: types.ExecuteChunkParams): void {
+    assertDefined(params, 'params');
+    assertValidPublicKey(params.payer, 'params.payer');
+    assertValidPublicKey(params.smartWallet, 'params.smartWallet');
+    assertValidTransactionInstructionArray(
+      params.cpiInstructions,
+      'params.cpiInstructions'
+    );
+
+    if (params.cpiSigners !== undefined) {
+      assertValidPublicKeyArray(params.cpiSigners, 'params.cpiSigners');
+    }
+  }
+
+  /**
+   * Validates CloseChunkParams
+   */
+  private validateCloseChunkParams(params: types.CloseChunkParams): void {
+    assertDefined(params, 'params');
+    assertValidPublicKey(params.payer, 'params.payer');
+    assertValidPublicKey(params.smartWallet, 'params.smartWallet');
+    assertPositiveBN(params.nonce, 'params.nonce');
   }
 
   // ============================================================================
@@ -133,59 +273,140 @@ export class LazorkitClient {
   // ============================================================================
 
   /**
-   * Fetches program configuration data
-   */
-  async getConfigData() {
-    return await this.program.account.config.fetch(this.configPda());
-  }
-
-  /**
    * Fetches smart wallet data for a given smart wallet
    */
-  async getSmartWalletData(smartWallet: PublicKey) {
-    const pda = this.smartWalletDataPda(smartWallet);
-    return await this.program.account.smartWallet.fetch(pda);
+  async getWalletStateData(smartWallet: PublicKey) {
+    const { data } = await this.fetchWalletStateContext(smartWallet);
+    return data;
   }
 
   /**
-   * Fetches wallet device data for a given device
+   * Fetches transaction session data for a given transaction session
    */
-  async getWalletDeviceData(walletDevice: PublicKey) {
-    return await this.program.account.walletDevice.fetch(walletDevice);
+  async getChunkData(chunk: PublicKey) {
+    return (await this.program.account.chunk.fetch(chunk)) as types.Chunk;
   }
 
   /**
    * Finds a smart wallet by passkey public key
+   * Searches through all WalletState accounts to find one containing the specified passkey
+   *
+   * @param passkeyPublicKey - Passkey public key (33 bytes)
+   * @returns Smart wallet information or null if not found
+   * @throws {ValidationError} if passkeyPublicKey is invalid
    */
-  async getSmartWalletByPasskey(passkeyPubkey: number[]): Promise<{
+  async getSmartWalletByPasskey(
+    passkeyPublicKey: types.PasskeyPublicKey | number[]
+  ): Promise<{
     smartWallet: PublicKey | null;
-    walletDevice: PublicKey | null;
+    walletState: PublicKey | null;
+    deviceSlot: { passkeyPubkey: number[]; credentialHash: number[] } | null;
   }> {
-    const discriminator = LazorkitIdl.accounts.find(
-      (a: any) => a.name === 'WalletDevice'
-    )!.discriminator;
+    assertValidPasskeyPublicKey(passkeyPublicKey, 'passkeyPublicKey');
+    // Get the discriminator for WalletState accounts
+    const discriminator = LazorkitIdl.accounts?.find(
+      (a: any) => a.name === 'WalletState'
+    )?.discriminator;
 
+    if (!discriminator) {
+      throw new ValidationError(
+        'WalletState discriminator not found in IDL',
+        'passkeyPublicKey'
+      );
+    }
+
+    // Get all WalletState accounts
     const accounts = await this.connection.getProgramAccounts(this.programId, {
-      dataSlice: {
-        offset: 8,
-        length: 33,
-      },
+      filters: [{ memcmp: { offset: 0, bytes: bs58.encode(discriminator) } }],
+    });
+
+    // Search through each WalletState account
+    for (const account of accounts) {
+      try {
+        // Deserialize the WalletState account data
+        const walletStateData = this.program.coder.accounts.decode(
+          'WalletState',
+          account.account.data
+        );
+
+        // Check if any device contains the target passkey
+        for (const device of walletStateData.devices) {
+          if (byteArrayEquals(device.passkeyPubkey, passkeyPublicKey)) {
+            // Found the matching device, return the smart wallet
+            const smartWallet = this.getSmartWalletPubkey(
+              walletStateData.walletId
+            );
+            return {
+              smartWallet,
+              walletState: account.pubkey,
+              deviceSlot: {
+                passkeyPubkey: device.passkeyPubkey,
+                credentialHash: device.credentialHash,
+              },
+            };
+          }
+        }
+      } catch (error) {
+        // Skip accounts that can't be deserialized (might be corrupted or different type)
+        continue;
+      }
+    }
+
+    // No matching wallet found
+    return {
+      smartWallet: null,
+      walletState: null,
+      deviceSlot: null,
+    };
+  }
+
+  /**
+   * Find smart wallet by credential hash
+   * Searches through all WalletState accounts to find one containing the specified credential hash
+   *
+   * @param credentialHash - Credential hash (32 bytes)
+   * @returns Smart wallet information or null if not found
+   * @throws {ValidationError} if credentialHash is invalid
+   */
+  async getSmartWalletByCredentialHash(
+    credentialHash: types.CredentialHash | number[]
+  ) {
+    assertValidCredentialHash(credentialHash, 'credentialHash');
+    // Get the discriminator for WalletState accounts
+    const discriminator = LazorkitIdl.accounts?.find(
+      (a: any) => a.name === 'WalletDevice'
+    )?.discriminator;
+
+    if (!discriminator) {
+      throw new ValidationError(
+        'WalletDevice discriminator not found in IDL',
+        'credentialHash'
+      );
+    }
+
+    // Get wallet_device have this credential hash
+    const accounts = await this.connection.getProgramAccounts(this.programId, {
       filters: [
         { memcmp: { offset: 0, bytes: bs58.encode(discriminator) } },
-        { memcmp: { offset: 8, bytes: bs58.encode(passkeyPubkey) } },
+        {
+          memcmp: { offset: 8 + 33, bytes: bs58.encode(credentialHash) },
+        },
       ],
     });
 
     if (accounts.length === 0) {
-      return { walletDevice: null, smartWallet: null };
+      return null;
     }
-
-    const walletDeviceData = await this.getWalletDeviceData(accounts[0].pubkey);
-
-    return {
-      walletDevice: accounts[0].pubkey,
-      smartWallet: walletDeviceData.smartWallet,
-    };
+    for (const account of accounts) {
+      const walletDevice = await this.program.account.walletDevice.fetch(
+        account.pubkey
+      );
+      return {
+        smartWallet: walletDevice.smartWallet,
+        walletState: this.getWalletStatePubkey(walletDevice.smartWallet),
+        walletDevice: account.pubkey,
+      };
+    }
   }
 
   // ============================================================================
@@ -193,224 +414,236 @@ export class LazorkitClient {
   // ============================================================================
 
   /**
-   * Builds the initialize program instruction
-   */
-  async buildInitializeInstruction(
-    payer: PublicKey
-  ): Promise<TransactionInstruction> {
-    return await this.program.methods
-      .initialize()
-      .accountsPartial({
-        signer: payer,
-        config: this.configPda(),
-        policyProgramRegistry: this.policyProgramRegistryPda(),
-        defaultPolicyProgram: this.defaultPolicyProgram.programId,
-        systemProgram: SystemProgram.programId,
-      })
-      .instruction();
-  }
-
-  /**
    * Builds the create smart wallet instruction
+   *
+   * @param payer - Payer account public key
+   * @param smartWallet - Smart wallet PDA address
+   * @param policyInstruction - Policy initialization instruction
+   * @param args - Create smart wallet arguments
+   * @returns Transaction instruction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async buildCreateSmartWalletInstruction(
+  async buildCreateSmartWalletIns(
     payer: PublicKey,
     smartWallet: PublicKey,
-    walletDevice: PublicKey,
     policyInstruction: TransactionInstruction,
     args: types.CreateSmartWalletArgs
   ): Promise<TransactionInstruction> {
+    assertValidPublicKey(payer, 'payer');
+    assertValidPublicKey(smartWallet, 'smartWallet');
+    assertValidTransactionInstruction(policyInstruction, 'policyInstruction');
+    assertDefined(args, 'args');
+    assertValidPasskeyPublicKey(args.passkeyPublicKey, 'args.passkeyPublicKey');
+    assertValidCredentialHash(args.credentialHash, 'args.credentialHash');
+    assertPositiveBN(args.walletId, 'args.walletId');
+    assertPositiveBN(args.amount, 'args.amount');
+
     return await this.program.methods
       .createSmartWallet(args)
       .accountsPartial({
         payer,
         smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        policyProgramRegistry: this.policyProgramRegistryPda(),
-        walletDevice,
-        config: this.configPda(),
-        defaultPolicyProgram: this.defaultPolicyProgram.programId,
-        systemProgram: SystemProgram.programId,
+        walletState: this.getWalletStatePubkey(smartWallet),
+        walletDevice: this.getWalletDevicePubkey(
+          smartWallet,
+          args.credentialHash
+        ),
+        policyProgram: policyInstruction.programId,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
       .remainingAccounts([
-        ...instructionToAccountMetas(policyInstruction, payer),
+        ...instructionToAccountMetas(policyInstruction),
       ])
       .instruction();
   }
 
   /**
-   * Builds the execute transaction instruction
+   * Builds the execute direct transaction instruction
+   *
+   * @param payer - Payer account public key
+   * @param smartWallet - Smart wallet PDA address
+   * @param walletDevice - Wallet device PDA address
+   * @param args - Execute arguments
+   * @param policyInstruction - Policy check instruction
+   * @param cpiInstruction - CPI instruction to execute
+   * @param cpiSigners - Optional signers for CPI instruction
+   * @returns Transaction instruction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async buildExecuteTransactionInstruction(
+  async buildExecuteIns(
     payer: PublicKey,
     smartWallet: PublicKey,
-    args: types.ExecuteTransactionArgs,
+    walletDevice: PublicKey,
+    args: types.ExecuteArgs,
     policyInstruction: TransactionInstruction,
-    cpiInstruction: TransactionInstruction
+    cpiInstruction: TransactionInstruction,
+    cpiSigners?: readonly PublicKey[]
   ): Promise<TransactionInstruction> {
+    assertValidPublicKey(payer, 'payer');
+    assertValidPublicKey(smartWallet, 'smartWallet');
+    assertValidPublicKey(walletDevice, 'walletDevice');
+    assertDefined(args, 'args');
+    assertValidTransactionInstruction(policyInstruction, 'policyInstruction');
+    assertValidTransactionInstruction(cpiInstruction, 'cpiInstruction');
+
+    // Validate cpiSigners if provided
+    if (cpiSigners !== undefined) {
+      assertValidPublicKeyArray(cpiSigners, 'cpiSigners');
+    }
+
     return await this.program.methods
-      .executeTransaction(args)
+      .execute(args)
       .accountsPartial({
         payer,
         smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        walletDevice: this.walletDevicePda(smartWallet, args.passkeyPubkey),
-        policyProgramRegistry: this.policyProgramRegistryPda(),
+        walletState: this.getWalletStatePubkey(smartWallet),
+        walletDevice,
         policyProgram: policyInstruction.programId,
         cpiProgram: cpiInstruction.programId,
-        config: this.configPda(),
-        ixSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
+        ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
       .remainingAccounts([
-        ...instructionToAccountMetas(policyInstruction, payer),
-        ...instructionToAccountMetas(cpiInstruction, payer),
+        ...instructionToAccountMetas(policyInstruction),
+        ...instructionToAccountMetas(cpiInstruction, cpiSigners),
       ])
       .instruction();
   }
 
   /**
-   * Builds the invoke policy instruction
+   * Builds the create deferred execution instruction
+   *
+   * @param payer - Payer account public key
+   * @param smartWallet - Smart wallet PDA address
+   * @param walletDevice - Wallet device PDA address
+   * @param args - Create chunk arguments
+   * @param policyInstruction - Policy check instruction
+   * @returns Transaction instruction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async buildInvokePolicyInstruction(
+  async buildCreateChunkIns(
     payer: PublicKey,
     smartWallet: PublicKey,
-    args: types.InvokePolicyArgs,
+    walletDevice: PublicKey,
+    args: types.CreateChunkArgs,
     policyInstruction: TransactionInstruction
   ): Promise<TransactionInstruction> {
-    const remaining: AccountMeta[] = [];
+    assertValidPublicKey(payer, 'payer');
+    assertValidPublicKey(smartWallet, 'smartWallet');
+    assertValidPublicKey(walletDevice, 'walletDevice');
+    assertDefined(args, 'args');
+    assertValidTransactionInstruction(policyInstruction, 'policyInstruction');
 
-    if (args.newWalletDevice) {
-      const newWalletDevice = this.walletDevicePda(
-        smartWallet,
-        args.newWalletDevice.passkeyPubkey
-      );
-      remaining.push({
-        pubkey: newWalletDevice,
-        isWritable: true,
-        isSigner: false,
-      });
-    }
-
-    remaining.push(...instructionToAccountMetas(policyInstruction, payer));
-
-    return await this.program.methods
-      .invokePolicy(args)
-      .accountsPartial({
-        payer,
-        config: this.configPda(),
-        smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        walletDevice: this.walletDevicePda(smartWallet, args.passkeyPubkey),
-        policyProgram: policyInstruction.programId,
-        policyProgramRegistry: this.policyProgramRegistryPda(),
-        ixSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
-        systemProgram: SystemProgram.programId,
-      })
-      .remainingAccounts(remaining)
-      .instruction();
-  }
-
-  /**
-   * Builds the update policy instruction
-   */
-  async buildUpdatePolicyInstruction(
-    payer: PublicKey,
-    smartWallet: PublicKey,
-    args: types.UpdatePolicyArgs,
-    destroyPolicyInstruction: TransactionInstruction,
-    initPolicyInstruction: TransactionInstruction
-  ): Promise<TransactionInstruction> {
-    const remaining: AccountMeta[] = [];
-
-    if (args.newWalletDevice) {
-      const newWalletDevice = this.walletDevicePda(
-        smartWallet,
-        args.newWalletDevice.passkeyPubkey
-      );
-      remaining.push({
-        pubkey: newWalletDevice,
-        isWritable: true,
-        isSigner: false,
-      });
-    }
-
-    remaining.push(
-      ...instructionToAccountMetas(destroyPolicyInstruction, payer)
-    );
-    remaining.push(...instructionToAccountMetas(initPolicyInstruction, payer));
-
-    return await this.program.methods
-      .updatePolicy(args)
-      .accountsPartial({
-        payer,
-        config: this.configPda(),
-        smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        walletDevice: this.walletDevicePda(smartWallet, args.passkeyPubkey),
-        oldPolicyProgram: destroyPolicyInstruction.programId,
-        newPolicyProgram: initPolicyInstruction.programId,
-        policyProgramRegistry: this.policyProgramRegistryPda(),
-        ixSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
-        systemProgram: SystemProgram.programId,
-      })
-      .remainingAccounts(remaining)
-      .instruction();
-  }
-
-  /**
-   * Builds the create transaction session instruction
-   */
-  async buildCreateTransactionSessionInstruction(
-    payer: PublicKey,
-    smartWallet: PublicKey,
-    args: types.CreateSessionArgs,
-    policyInstruction: TransactionInstruction
-  ): Promise<TransactionInstruction> {
-    return await this.program.methods
-      .createTransactionSession(args)
-      .accountsPartial({
-        payer,
-        config: this.configPda(),
-        smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        walletDevice: this.walletDevicePda(smartWallet, args.passkeyPubkey),
-        policyProgramRegistry: this.policyProgramRegistryPda(),
-        policyProgram: policyInstruction.programId,
-        ixSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
-        systemProgram: SystemProgram.programId,
-      })
-      .remainingAccounts([
-        ...instructionToAccountMetas(policyInstruction, payer),
-      ])
-      .instruction();
-  }
-
-  /**
-   * Builds the execute session transaction instruction
-   */
-  async buildExecuteSessionTransactionInstruction(
-    payer: PublicKey,
-    smartWallet: PublicKey,
-    cpiInstruction: TransactionInstruction
-  ): Promise<TransactionInstruction> {
-    const cfg = await this.getSmartWalletData(smartWallet);
-    const transactionSession = this.transactionSessionPda(
+    const { walletState, data: walletStateData } =
+      await this.fetchWalletStateContext(smartWallet);
+    const chunkPda = this.getChunkPubkey(
       smartWallet,
-      cfg.lastNonce
+      walletStateData.lastNonce
     );
 
     return await this.program.methods
-      .executeSessionTransaction(cpiInstruction.data)
+      .createChunk(args)
       .accountsPartial({
         payer,
-        config: this.configPda(),
         smartWallet,
-        smartWalletData: this.smartWalletDataPda(smartWallet),
-        cpiProgram: cpiInstruction.programId,
-        transactionSession,
-        sessionRefund: payer,
+        walletState,
+        walletDevice,
+        policyProgram: policyInstruction.programId,
+        chunk: chunkPda,
+        ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
-      .remainingAccounts([...instructionToAccountMetas(cpiInstruction, payer)])
+      .remainingAccounts([...instructionToAccountMetas(policyInstruction)])
+      .instruction();
+  }
+
+  /**
+   * Builds the execute deferred transaction instruction
+   *
+   * @param payer - Payer account public key
+   * @param smartWallet - Smart wallet PDA address
+   * @param cpiInstructions - CPI instructions to execute
+   * @param cpiSigners - Optional signers for CPI instructions
+   * @returns Transaction instruction
+   * @throws {ValidationError} if parameters are invalid
+   */
+  async buildExecuteChunkIns(
+    payer: PublicKey,
+    smartWallet: PublicKey,
+    cpiInstructions: readonly TransactionInstruction[],
+    cpiSigners?: readonly PublicKey[]
+  ): Promise<TransactionInstruction> {
+    assertValidPublicKey(payer, 'payer');
+    assertValidPublicKey(smartWallet, 'smartWallet');
+    assertValidTransactionInstructionArray(cpiInstructions, 'cpiInstructions');
+
+    // Validate cpiSigners if provided
+    if (cpiSigners !== undefined) {
+      assertValidPublicKeyArray(cpiSigners, 'cpiSigners');
+    }
+
+    const { data: walletStateData } = await this.fetchWalletStateContext(
+      smartWallet
+    );
+    const latestNonce = walletStateData.lastNonce.sub(new anchor.BN(1));
+    const { chunk, data: chunkData } = await this.fetchChunkContext(
+      smartWallet,
+      latestNonce
+    );
+
+    // Prepare CPI data and split indices
+    const instructionDataList = cpiInstructions.map((ix) =>
+      Buffer.from(ix.data)
+    );
+    const splitIndex = calculateSplitIndex(cpiInstructions);
+    const allAccountMetas = collectCpiAccountMetas(cpiInstructions, cpiSigners);
+
+    return await this.program.methods
+      .executeChunk(instructionDataList, Buffer.from(splitIndex))
+      .accountsPartial({
+        payer,
+        smartWallet,
+        walletState: this.getWalletStatePubkey(smartWallet),
+        chunk,
+        sessionRefund: chunkData.rentRefundAddress,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .remainingAccounts(allAccountMetas)
+      .instruction();
+  }
+
+  /**
+   * Builds the close chunk instruction
+   *
+   * @param payer - Payer account public key
+   * @param smartWallet - Smart wallet PDA address
+   * @param nonce - Nonce of the chunk to close
+   * @returns Transaction instruction
+   * @throws {ValidationError} if parameters are invalid
+   */
+  async buildCloseChunkIns(
+    payer: PublicKey,
+    smartWallet: PublicKey,
+    nonce: BN
+  ): Promise<TransactionInstruction> {
+    assertValidPublicKey(payer, 'payer');
+    assertValidPublicKey(smartWallet, 'smartWallet');
+    assertPositiveBN(nonce, 'nonce');
+
+    const { chunk, data: chunkData } = await this.fetchChunkContext(
+      smartWallet,
+      nonce
+    );
+
+    return await this.program.methods
+      .closeChunk()
+      .accountsPartial({
+        payer,
+        smartWallet,
+        walletState: this.getWalletStatePubkey(smartWallet),
+        chunk,
+        sessionRefund: chunkData.rentRefundAddress,
+      })
       .instruction();
   }
 
@@ -420,52 +653,63 @@ export class LazorkitClient {
 
   /**
    * Creates a smart wallet with passkey authentication
+   *
+   * @param params - Create smart wallet parameters
+   * @param options - Transaction builder options
+   * @returns Transaction and wallet information
+   * @throws {ValidationError} if parameters are invalid
    */
-  async createSmartWalletTransaction(
-    params: types.CreateSmartWalletParams
+  async createSmartWalletTxn(
+    params: types.CreateSmartWalletParams,
+    options: types.TransactionBuilderOptions = {}
   ): Promise<{
-    transaction: Transaction;
+    transaction: Transaction | VersionedTransaction;
     smartWalletId: BN;
     smartWallet: PublicKey;
   }> {
-    const smartWalletId = params.smartWalletId || this.generateWalletId();
-    const smartWallet = this.smartWalletPda(smartWalletId);
-    const walletDevice = this.walletDevicePda(
-      smartWallet,
-      params.passkeyPubkey
-    );
+    this.validateCreateSmartWalletParams(params);
 
-    let policyInstruction = await this.defaultPolicyProgram.buildInitPolicyIx(
-      params.payer,
-      smartWallet,
-      walletDevice
-    );
+    const smartWalletId = params.smartWalletId ?? this.generateWalletId();
+    const smartWallet = this.getSmartWalletPubkey(smartWalletId);
+    const walletState = this.getWalletStatePubkey(smartWallet);
+    const amount =
+      params.amount ?? new anchor.BN(EMPTY_PDA_RENT_EXEMPT_BALANCE);
+    const policyDataSize =
+      params.policyDataSize ?? this.defaultPolicyProgram.getPolicyDataSize();
+    const credentialHash = credentialHashFromBase64(params.credentialIdBase64);
 
-    if (params.policyInstruction) {
-      policyInstruction = params.policyInstruction;
-    }
+    const policyInstruction = await this.policyResolver.resolveForCreate({
+      provided: params.policyInstruction,
+      smartWalletId,
+      smartWallet,
+      walletState,
+      passkeyPublicKey: params.passkeyPublicKey,
+      credentialHash,
+    });
 
     const args = {
-      passkeyPubkey: params.passkeyPubkey,
-      credentialId: Buffer.from(params.credentialIdBase64, 'base64'),
-      policyData: policyInstruction.data,
+      passkeyPublicKey: params.passkeyPublicKey,
+      credentialHash,
+      initPolicyData: policyInstruction.data,
       walletId: smartWalletId,
-      isPayForUser: params.isPayForUser === true,
+      amount,
+      policyDataSize,
     };
 
-    const instruction = await this.buildCreateSmartWalletInstruction(
+    const instruction = await this.buildCreateSmartWalletIns(
       params.payer,
       smartWallet,
-      walletDevice,
       policyInstruction,
       args
     );
 
-    const transaction = await buildLegacyTransaction(
+    const result = await buildTransaction(
       this.connection,
       params.payer,
-      [instruction]
+      [instruction],
+      options
     );
+    const transaction = result.transaction;
 
     return {
       transaction,
@@ -475,212 +719,204 @@ export class LazorkitClient {
   }
 
   /**
-   * Executes a transaction with passkey authentication
+   * Executes a direct transaction with passkey authentication
+   *
+   * @param params - Execute parameters
+   * @param options - Transaction builder options
+   * @returns Transaction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async executeTransactionWithAuth(
-    params: types.ExecuteTransactionParams
-  ): Promise<VersionedTransaction> {
+  async executeTxn(
+    params: types.ExecuteParams,
+    options: types.TransactionBuilderOptions = {}
+  ): Promise<Transaction | VersionedTransaction> {
+    this.validateExecuteParams(params);
+
     const authInstruction = buildPasskeyVerificationInstruction(
       params.passkeySignature
     );
 
-    let policyInstruction = await this.defaultPolicyProgram.buildCheckPolicyIx(
-      this.walletDevicePda(
-        params.smartWallet,
-        params.passkeySignature.passkeyPubkey
-      ),
-      params.smartWallet
+    const walletStateData = await this.getWalletStateData(params.smartWallet);
+    const policySigner = this.getWalletDevicePubkey(
+      params.smartWallet,
+      params.credentialHash
     );
-
-    if (params.policyInstruction) {
-      policyInstruction = params.policyInstruction;
-    }
+    const policyInstruction = await this.policyResolver.resolveForExecute({
+      provided: params.policyInstruction,
+      smartWallet: params.smartWallet,
+      credentialHash: params.credentialHash,
+      passkeyPublicKey: params.passkeySignature.passkeyPublicKey,
+      walletStateData,
+    });
 
     const signatureArgs = convertPasskeySignatureToInstructionArgs(
       params.passkeySignature
     );
 
-    const execInstruction = await this.buildExecuteTransactionInstruction(
+    const execInstruction = await this.buildExecuteIns(
       params.payer,
       params.smartWallet,
+      policySigner,
       {
         ...signatureArgs,
-        verifyInstructionIndex: 0,
+        verifyInstructionIndex: calculateVerifyInstructionIndex(
+          options.computeUnitLimit
+        ),
+        splitIndex: policyInstruction.keys.length,
         policyData: policyInstruction.data,
         cpiData: params.cpiInstruction.data,
-        splitIndex: policyInstruction.keys.length,
+        timestamp: params.timestamp,
       },
       policyInstruction,
-      params.cpiInstruction
+      params.cpiInstruction,
+      params.cpiSigners
     );
 
     const instructions = combineInstructionsWithAuth(authInstruction, [
       execInstruction,
     ]);
-    return buildVersionedTransaction(
+
+    const result = await buildTransaction(
       this.connection,
       params.payer,
-      instructions
+      instructions,
+      options
     );
+
+    return result.transaction;
   }
 
   /**
-   * Invokes a policy with passkey authentication
+   * Creates a deferred execution with passkey authentication
+   *
+   * @param params - Create chunk parameters
+   * @param options - Transaction builder options
+   * @returns Transaction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async invokePolicyWithAuth(
-    params: types.InvokePolicyParams
-  ): Promise<VersionedTransaction> {
+  async createChunkTxn(
+    params: types.CreateChunkParams,
+    options: types.TransactionBuilderOptions = {}
+  ): Promise<Transaction | VersionedTransaction> {
+    this.validateCreateChunkParams(params);
+
     const authInstruction = buildPasskeyVerificationInstruction(
       params.passkeySignature
     );
+
+    const walletStateData = await this.getWalletStateData(params.smartWallet);
+    const walletDevice = this.getWalletDevicePubkey(
+      params.smartWallet,
+      params.credentialHash
+    );
+
+    const policyInstruction = await this.policyResolver.resolveForExecute({
+      provided: params.policyInstruction,
+      smartWallet: params.smartWallet,
+      credentialHash: params.credentialHash,
+      passkeyPublicKey: params.passkeySignature.passkeyPublicKey,
+      walletStateData,
+    });
 
     const signatureArgs = convertPasskeySignatureToInstructionArgs(
       params.passkeySignature
     );
 
-    const invokeInstruction = await this.buildInvokePolicyInstruction(
+    const cpiHash = calculateCpiHash(
+      params.cpiInstructions,
+      params.smartWallet,
+      params.cpiSigners
+    );
+
+    const createChunkInstruction = await this.buildCreateChunkIns(
       params.payer,
       params.smartWallet,
+      walletDevice,
       {
         ...signatureArgs,
-        newWalletDevice: params.newWalletDevice
-          ? {
-              passkeyPubkey: Array.from(params.newWalletDevice.passkeyPubkey),
-              credentialId: Buffer.from(
-                params.newWalletDevice.credentialIdBase64,
-                'base64'
-              ),
-            }
-          : null,
-        policyData: params.policyInstruction.data,
-        verifyInstructionIndex: 0,
+        policyData: policyInstruction.data,
+        verifyInstructionIndex: calculateVerifyInstructionIndex(
+          options.computeUnitLimit
+        ),
+        timestamp: params.timestamp,
+        cpiHash: Array.from(cpiHash),
       },
-      params.policyInstruction
+      policyInstruction
     );
 
     const instructions = combineInstructionsWithAuth(authInstruction, [
-      invokeInstruction,
+      createChunkInstruction,
     ]);
-    return buildVersionedTransaction(
+
+    const result = await buildTransaction(
       this.connection,
       params.payer,
-      instructions
+      instructions,
+      options
     );
+
+    return result.transaction;
   }
 
   /**
-   * Updates a policy with passkey authentication
+   * Executes a deferred transaction (no authentication needed)
+   *
+   * @param params - Execute chunk parameters
+   * @param options - Transaction builder options
+   * @returns Transaction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async updatePolicyWithAuth(
-    params: types.UpdatePolicyParams
-  ): Promise<VersionedTransaction> {
-    const authInstruction = buildPasskeyVerificationInstruction(
-      params.passkeySignature
-    );
+  async executeChunkTxn(
+    params: types.ExecuteChunkParams,
+    options: types.TransactionBuilderOptions = {}
+  ): Promise<Transaction | VersionedTransaction> {
+    this.validateExecuteChunkParams(params);
 
-    const signatureArgs = convertPasskeySignatureToInstructionArgs(
-      params.passkeySignature
-    );
-
-    const updateInstruction = await this.buildUpdatePolicyInstruction(
+    const instruction = await this.buildExecuteChunkIns(
       params.payer,
       params.smartWallet,
-      {
-        ...signatureArgs,
-        verifyInstructionIndex: 0,
-        destroyPolicyData: params.destroyPolicyInstruction.data,
-        initPolicyData: params.initPolicyInstruction.data,
-        splitIndex:
-          (params.newWalletDevice ? 1 : 0) +
-          params.destroyPolicyInstruction.keys.length,
-        newWalletDevice: params.newWalletDevice
-          ? {
-              passkeyPubkey: Array.from(params.newWalletDevice.passkeyPubkey),
-              credentialId: Buffer.from(
-                params.newWalletDevice.credentialIdBase64,
-                'base64'
-              ),
-            }
-          : null,
-      },
-      params.destroyPolicyInstruction,
-      params.initPolicyInstruction
+      params.cpiInstructions,
+      params.cpiSigners
     );
 
-    const instructions = combineInstructionsWithAuth(authInstruction, [
-      updateInstruction,
-    ]);
-    return buildVersionedTransaction(
+    const result = await buildTransaction(
       this.connection,
       params.payer,
-      instructions
+      [instruction],
+      options
     );
+
+    return result.transaction;
   }
 
   /**
-   * Creates a transaction session with passkey authentication
+   * Closes a deferred transaction (no authentication needed)
+   *
+   * @param params - Close chunk parameters
+   * @param options - Transaction builder options
+   * @returns Transaction
+   * @throws {ValidationError} if parameters are invalid
    */
-  async createTransactionSessionWithAuth(
-    params: types.CreateTransactionSessionParams
-  ): Promise<VersionedTransaction> {
-    const authInstruction = buildPasskeyVerificationInstruction(
-      params.passkeySignature
-    );
+  async closeChunkTxn(
+    params: types.CloseChunkParams,
+    options: types.TransactionBuilderOptions = {}
+  ): Promise<Transaction | VersionedTransaction> {
+    this.validateCloseChunkParams(params);
 
-    let policyInstruction = await this.defaultPolicyProgram.buildCheckPolicyIx(
-      this.walletDevicePda(
-        params.smartWallet,
-        params.passkeySignature.passkeyPubkey
-      ),
-      params.smartWallet
-    );
-
-    if (params.policyInstruction) {
-      policyInstruction = params.policyInstruction;
-    }
-
-    const signatureArgs = convertPasskeySignatureToInstructionArgs(
-      params.passkeySignature
-    );
-
-    const sessionInstruction =
-      await this.buildCreateTransactionSessionInstruction(
-        params.payer,
-        params.smartWallet,
-        {
-          ...signatureArgs,
-          expiresAt: new BN(params.expiresAt),
-          policyData: policyInstruction.data,
-          verifyInstructionIndex: 0,
-        },
-        policyInstruction
-      );
-
-    const instructions = combineInstructionsWithAuth(authInstruction, [
-      sessionInstruction,
-    ]);
-    return buildVersionedTransaction(
-      this.connection,
-      params.payer,
-      instructions
-    );
-  }
-
-  /**
-   * Executes a session transaction (no authentication needed)
-   */
-  async executeSessionTransaction(
-    params: types.ExecuteSessionTransactionParams
-  ): Promise<VersionedTransaction> {
-    const instruction = await this.buildExecuteSessionTransactionInstruction(
+    const instruction = await this.buildCloseChunkIns(
       params.payer,
       params.smartWallet,
-      params.cpiInstruction
+      params.nonce
     );
 
-    return buildVersionedTransaction(this.connection, params.payer, [
-      instruction,
-    ]);
+    const result = await buildTransaction(
+      this.connection,
+      params.payer,
+      [instruction],
+      options
+    );
+
+    return result.transaction;
   }
 
   // ============================================================================
@@ -694,108 +930,68 @@ export class LazorkitClient {
     action: types.SmartWalletActionArgs;
     payer: PublicKey;
     smartWallet: PublicKey;
-    passkeyPubkey: number[];
+    passkeyPublicKey: number[];
+    credentialHash: number[];
+    timestamp: BN;
   }): Promise<Buffer> {
     let message: Buffer;
-    const { action, payer, smartWallet, passkeyPubkey } = params;
+    const { action, smartWallet, passkeyPublicKey, timestamp } = params;
 
     switch (action.type) {
-      case types.SmartWalletAction.ExecuteTransaction: {
-        const { policyInstruction: policyIns, cpiInstruction } =
-          action.args as types.ArgsByAction[types.SmartWalletAction.ExecuteTransaction];
+      case types.SmartWalletAction.Execute: {
+        const {
+          policyInstruction: policyIns,
+          cpiInstruction,
+          cpiSigners,
+        } = action.args as types.ArgsByAction[types.SmartWalletAction.Execute];
 
-        let policyInstruction =
-          await this.defaultPolicyProgram.buildCheckPolicyIx(
-            this.walletDevicePda(smartWallet, passkeyPubkey),
-            params.smartWallet
-          );
+        const walletStateData = await this.getWalletStateData(
+          params.smartWallet
+        );
 
-        if (policyIns) {
-          policyInstruction = policyIns;
-        }
+        const policyInstruction = await this.policyResolver.resolveForExecute({
+          provided: policyIns,
+          smartWallet: params.smartWallet,
+          credentialHash: params.credentialHash as types.CredentialHash,
+          passkeyPublicKey,
+          walletStateData,
+        });
 
-        const smartWalletData = await this.getSmartWalletData(smartWallet);
+        const smartWalletConfig = await this.getWalletStateData(smartWallet);
 
         message = buildExecuteMessage(
-          payer,
-          smartWalletData.lastNonce,
-          new BN(Math.floor(Date.now() / 1000)),
+          smartWallet,
+          smartWalletConfig.lastNonce,
+          timestamp,
           policyInstruction,
-          cpiInstruction
+          cpiInstruction,
+          cpiSigners
         );
         break;
       }
-      case types.SmartWalletAction.InvokePolicy: {
-        const { policyInstruction } =
-          action.args as types.ArgsByAction[types.SmartWalletAction.InvokePolicy];
+      case types.SmartWalletAction.CreateChunk: {
+        const { policyInstruction, cpiInstructions, cpiSigners } =
+          action.args as types.ArgsByAction[types.SmartWalletAction.CreateChunk];
 
-        const smartWalletData = await this.getSmartWalletData(smartWallet);
+        const smartWalletConfig = await this.getWalletStateData(smartWallet);
 
-        message = buildInvokePolicyMessage(
-          payer,
-          smartWalletData.lastNonce,
-          new BN(Math.floor(Date.now() / 1000)),
-          policyInstruction
+        message = buildCreateChunkMessage(
+          smartWallet,
+          smartWalletConfig.lastNonce,
+          timestamp,
+          policyInstruction,
+          cpiInstructions,
+          cpiSigners
         );
         break;
       }
-      case types.SmartWalletAction.UpdatePolicy: {
-        const { initPolicyIns, destroyPolicyIns } =
-          action.args as types.ArgsByAction[types.SmartWalletAction.UpdatePolicy];
-
-        const smartWalletData = await this.getSmartWalletData(smartWallet);
-
-        message = buildUpdatePolicyMessage(
-          payer,
-          smartWalletData.lastNonce,
-          new BN(Math.floor(Date.now() / 1000)),
-          destroyPolicyIns,
-          initPolicyIns
-        );
-        break;
-      }
-
       default:
-        throw new Error(`Unsupported SmartWalletAction: ${action.type}`);
+        throw new ValidationError(
+          `Unsupported SmartWalletAction: ${action.type}`,
+          'action.type'
+        );
     }
 
     return message;
-  }
-
-  // ============================================================================
-  // Legacy Compatibility Methods (Deprecated)
-  // ============================================================================
-
-  /**
-   * @deprecated Use createSmartWalletTransaction instead
-   */
-  async createSmartWalletTx(params: {
-    payer: PublicKey;
-    passkeyPubkey: number[];
-    credentialIdBase64: string;
-    policyInstruction?: TransactionInstruction | null;
-    isPayForUser?: boolean;
-    smartWalletId?: BN;
-  }) {
-    return this.createSmartWalletTransaction({
-      payer: params.payer,
-      passkeyPubkey: params.passkeyPubkey,
-      credentialIdBase64: params.credentialIdBase64,
-      policyInstruction: params.policyInstruction,
-      isPayForUser: params.isPayForUser,
-      smartWalletId: params.smartWalletId,
-    });
-  }
-
-  /**
-   * @deprecated Use buildAuthorizationMessage instead
-   */
-  async buildMessage(params: {
-    action: types.SmartWalletActionArgs;
-    payer: PublicKey;
-    smartWallet: PublicKey;
-    passkeyPubkey: number[];
-  }): Promise<Buffer> {
-    return this.buildAuthorizationMessage(params);
   }
 }

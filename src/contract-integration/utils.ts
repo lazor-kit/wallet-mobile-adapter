@@ -1,15 +1,21 @@
 import * as anchor from '@coral-xyz/anchor';
+import { Buffer } from 'buffer';
+import { sha256 } from 'js-sha256';
+import * as types from './types';
 
 export function instructionToAccountMetas(
   ix: anchor.web3.TransactionInstruction,
-  payer: anchor.web3.PublicKey
+  signers?: readonly anchor.web3.PublicKey[]
 ): anchor.web3.AccountMeta[] {
   return ix.keys.map((k) => ({
     pubkey: k.pubkey,
     isWritable: k.isWritable,
-    isSigner: k.pubkey.equals(payer),
+    isSigner: signers
+      ? signers.some((s) => s.toString() === k.pubkey.toString())
+      : false,
   }));
 }
+
 export function getRandomBytes(len: number): Uint8Array {
   if (typeof globalThis.crypto?.getRandomValues === 'function') {
     const arr = new Uint8Array(len);
@@ -23,4 +29,25 @@ export function getRandomBytes(len: number): Uint8Array {
   } catch {
     throw new Error('No CSPRNG available');
   }
+}
+
+export function byteArrayEquals(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function credentialHashFromBase64(
+  credentialIdBase64: string
+): types.CredentialHash {
+  const credentialId = Buffer.from(credentialIdBase64, 'base64');
+  return Array.from(
+    new Uint8Array(sha256.arrayBuffer(credentialId))
+  ) as types.CredentialHash;
 }

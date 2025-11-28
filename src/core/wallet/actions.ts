@@ -13,9 +13,12 @@ import {
   LazorkitClient,
   SmartWalletActionArgs,
   SmartWalletAction,
-} from '../../contract-integration';
+  asCredentialHash,
+  asPasskeyPublicKey
+} from '../../contract';
 import { getFeePayer, signAndSendTxn } from '../paymaster';
 import { logger } from '../logger';
+import { sha256 } from 'js-sha256';
 
 /**
  * Factory that returns high-level wallet operations bound to a given
@@ -35,18 +38,28 @@ export const createWalletActions = (
     setLoading(true);
 
     try {
-      // Debug log removed
-      let { smartWallet, walletDevice } = await lazorProgram.getSmartWalletByPasskey(
-        data.passkeyPubkey
+      // Compute credential hash
+      const credentialHash = asCredentialHash(
+        Array.from(
+          new Uint8Array(
+            sha256.arrayBuffer(Buffer.from(data.credentialId, 'base64'))
+          )
+        )
       );
 
-      if (!smartWallet || !walletDevice) {
-        // Debug log removed
+      // Fetch initial wallet state
+      let walletState = await lazorProgram.getSmartWalletByCredentialHash(credentialHash);
+
+      let smartWallet: anchor.web3.PublicKey | undefined;
+      let walletDevice: anchor.web3.PublicKey | undefined;
+
+      if (!walletState) {
+        // === Create new smart wallet on chain ===
 
         const feePayer = await getFeePayer(config.paymasterUrl);
 
-        const result = await lazorProgram.createSmartWalletTx({
-          passkeyPubkey: data.passkeyPubkey,
+        const result = await lazorProgram.createSmartWalletTxn({
+          passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
           payer: feePayer,
           credentialIdBase64: data.credentialId,
         });
@@ -67,22 +80,32 @@ export const createWalletActions = (
           throw new Error(`Create wallet relayer error: ${JSON.stringify(sendError)}`);
         }
 
-        await lazorProgram.connection.confirmTransaction(String(sendResult.signature), 'confirmed');
+        await lazorProgram.connection.confirmTransaction(
+          String(sendResult.signature),
+          'confirmed'
+        );
 
-        const fetched = await lazorProgram.getSmartWalletByPasskey(data.passkeyPubkey);
-        smartWallet = fetched.smartWallet;
-        walletDevice = fetched.walletDevice;
+        walletState = await lazorProgram.getSmartWalletByCredentialHash(credentialHash);
 
-        if (!smartWallet || !walletDevice) {
-          logger.error('Failed to create smart wallet on chain after transaction confirmed', {
-            signature: sendResult.signature,
-            passkeyPubkey: data.passkeyPubkey,
-          });
+        if (!walletState) {
+          logger.error(
+            'Failed to create smart wallet on chain after transaction confirmed',
+            {
+              signature: sendResult.signature,
+              passkeyPubkey: data.passkeyPubkey,
+            }
+          );
           throw new Error('Failed to create smart wallet on chain');
         }
       }
 
-      // Return the enriched WalletInfo
+      smartWallet = walletState.smartWallet;
+      walletDevice = walletState.walletDevice;
+
+      if (!smartWallet || !walletDevice) {
+        throw new Error('Smart wallet or wallet device is undefined after processing.');
+      }
+
       return {
         ...data,
         smartWallet: smartWallet.toString(),

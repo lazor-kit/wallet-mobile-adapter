@@ -8,11 +8,11 @@
 import * as anchor from '@coral-xyz/anchor';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { WalletState, WalletInfo, WalletConfig, ConnectOptions, SignOptions } from '../types';
+import { WalletStateClient, WalletInfo, WalletConfig, ConnectOptions, SignOptions } from '../types';
 import { DEFAULT_COMMITMENT, DEFAULTS, STORAGE_KEYS } from '../config';
 import { logger } from '../core/logger';
 import { connectAction, disconnectAction, signMessageAction } from '../actions';
-import { SmartWalletActionArgs } from '../contract-integration';
+import { SmartWalletActionArgs } from '../contract';
 
 // AsyncStorage dynamic import remains unchanged
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,7 +68,7 @@ const storage = {
   },
 };
 
-export const useWalletStore = create<WalletState>()(
+export const useWalletStore = create<WalletStateClient>()(
   persist(
     (set, get) => ({
       wallet: null,
@@ -141,7 +141,7 @@ export const useWalletStore = create<WalletState>()(
     {
       name: STORAGE_KEYS.WALLET,
       storage: createJSONStorage(() => storage),
-      partialize: (state: WalletState) => ({
+      partialize: (state: WalletStateClient) => ({
         wallet: state.wallet,
         config: state.config,
       }),

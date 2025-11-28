@@ -184,7 +184,6 @@ export const createWalletActions = (
         default:
           throw Error('Execute wallet is error');
       }
-      // return sendResult.signature;
     } catch (error: unknown) {
       logger.error('ExecuteWallet action failed:', error, {
         smartWallet: data.smartWallet,

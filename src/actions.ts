@@ -177,6 +177,7 @@ export const signMessageAction = async (
           const txnSignature = await walletActions.executeWallet(
             wallet,
             feePayer,
+            timestamp,
             action,
             browserResult,
             options

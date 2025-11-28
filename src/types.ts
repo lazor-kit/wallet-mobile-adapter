@@ -1,6 +1,6 @@
 import * as anchor from '@coral-xyz/anchor';
 import React from 'react';
-import { SmartWalletActionArgs } from './contract-integration';
+import { SmartWalletActionArgs } from './contract';
 
 /**
  * Core wallet types
@@ -29,13 +29,13 @@ export interface LazorKitProviderProps {
   readonly paymasterUrl?: string;
   readonly isDebug?: boolean;
   readonly children:
-    | React.JSX.Element
-    | React.JSX.Element[]
-    | string
-    | number
-    | boolean
-    | null
-    | undefined;
+  | React.JSX.Element
+  | React.JSX.Element[]
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
 }
 
 /**
@@ -70,7 +70,7 @@ export interface SignOptions {
 /**
  * Store state
  */
-export interface WalletState {
+export interface WalletStateClient {
   // Data
   wallet: WalletInfo | null;
   config: WalletConfig;
@@ -123,6 +123,7 @@ export interface WalletActions {
   executeWallet: (
     data: WalletInfo,
     feePayer: anchor.web3.PublicKey,
+    timestamp: anchor.BN,
     action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     signOptions: SignOptions

@@ -83,7 +83,7 @@ export type ArgsByAction = {
     cpiSigners?: readonly anchor.web3.PublicKey[];
   };
   [SmartWalletAction.CreateChunk]: {
-    policyInstruction: anchor.web3.TransactionInstruction | null;
+    policyInstruction: anchor.web3.TransactionInstruction;
     cpiInstructions: readonly anchor.web3.TransactionInstruction[];
     expiresAt: number;
     cpiSigners?: readonly anchor.web3.PublicKey[];
@@ -133,8 +133,8 @@ export interface TransactionBuilderOptions {
 
 export interface TransactionBuilderResult {
   readonly transaction:
-    | anchor.web3.Transaction
-    | anchor.web3.VersionedTransaction;
+  | anchor.web3.Transaction
+  | anchor.web3.VersionedTransaction;
   readonly isVersioned: boolean;
   readonly recentBlockhash: string;
 }

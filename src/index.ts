@@ -19,4 +19,4 @@ export { useWalletStore } from './react/store';
 export * from './types';
 export { logger } from './core/logger';
 export * from './config';
-export * from './contract-integration/index';
+export * from './contract';

@@ -4,7 +4,6 @@
  * This file contains the action functions for the wallet store.
  * These actions handle wallet connection, disconnection, and transaction signing.
  */
-
 import { handleAuthRedirect } from './core/auth/handleRedirect';
 import { openBrowser, openSignBrowser } from './core/browser/open';
 import { handleBrowserResult } from './core/browser/parseResult';
@@ -14,14 +13,15 @@ import { Buffer } from 'buffer';
 import { API_ENDPOINTS } from './config';
 import * as anchor from '@coral-xyz/anchor';
 import {
-  WalletState,
+  WalletStateClient,
   ConnectOptions,
   SignOptions,
   WalletConnectionError,
   SigningError,
 } from './types';
-import { LazorkitClient, SmartWalletActionArgs } from './contract-integration';
+import { asCredentialHash, LazorkitClient, SmartWalletActionArgs, getBlockchainTimestamp } from './contract';
 import { getFeePayer } from './core/paymaster';
+import { sha256 } from 'js-sha256';
 
 /**
  * Connects to the wallet
@@ -32,8 +32,8 @@ import { getFeePayer } from './core/paymaster';
  * @returns Promise that resolves to complete wallet information
  */
 export const connectAction = async (
-  get: () => WalletState,
-  set: (state: Partial<WalletState>) => void,
+  get: () => WalletStateClient,
+  set: (state: Partial<WalletStateClient>) => void,
   options: ConnectOptions
 ) => {
   const { isConnecting, config } = get();
@@ -46,9 +46,8 @@ export const connectAction = async (
 
   try {
     const redirectUrl = options.redirectUrl;
-    const connectUrl = `${config.ipfsUrl}/${
-      API_ENDPOINTS.CONNECT
-    }&redirect_url=${encodeURIComponent(redirectUrl)}`;
+    const connectUrl = `${config.ipfsUrl}/${API_ENDPOINTS.CONNECT
+      }&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     const resultUrl = await openBrowser(connectUrl, redirectUrl);
     const walletInfo = handleAuthRedirect(resultUrl);
@@ -81,7 +80,7 @@ export const connectAction = async (
  *
  * @param set - Zustand state setter function
  */
-export const disconnectAction = async (set: (state: Partial<WalletState>) => void) => {
+export const disconnectAction = async (set: (state: Partial<WalletStateClient>) => void) => {
   set({ isLoading: true });
   try {
     set({ wallet: null });
@@ -104,8 +103,8 @@ export const disconnectAction = async (set: (state: Partial<WalletState>) => voi
  * @param options - Signing options with callbacks
  */
 export const signMessageAction = async (
-  get: () => WalletState,
-  set: (state: Partial<WalletState>) => void,
+  get: () => WalletStateClient,
+  set: (state: Partial<WalletStateClient>) => void,
   action: SmartWalletActionArgs,
   options: SignOptions
 ) => {
@@ -135,11 +134,21 @@ export const signMessageAction = async (
 
     const feePayer = await getFeePayer(config.paymasterUrl);
 
-    const message = await lazorProgram.buildMessage({
+    const timestamp = await getBlockchainTimestamp(connection);
+
+    const message = await lazorProgram.buildAuthorizationMessage({
       action,
-      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
-      passkeyPubkey: wallet.passkeyPubkey,
       payer: feePayer,
+      smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
+      passkeyPublicKey: wallet.passkeyPubkey,
+      timestamp: new anchor.BN(timestamp),
+      credentialHash: asCredentialHash(
+        Array.from(
+          new Uint8Array(
+            sha256.arrayBuffer(Buffer.from(wallet.credentialId, 'base64'))
+          )
+        )
+      ),
     });
 
     const encodedChallenge = Buffer.from(message)

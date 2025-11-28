@@ -126,6 +126,7 @@ export const createWalletActions = (
   const executeWallet = async (
     data: WalletInfo,
     feePayer: anchor.web3.PublicKey,
+    timestamp: anchor.BN,
     action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     _options: SignOptions
@@ -133,84 +134,31 @@ export const createWalletActions = (
     setLoading(true);
     try {
       switch (action.type) {
-        case SmartWalletAction.ExecuteTransaction: {
+        case SmartWalletAction.Execute: {
           const { policyInstruction, cpiInstruction } =
-            action.args as ArgsByAction[SmartWalletAction.ExecuteTransaction];
+            action.args as ArgsByAction[SmartWalletAction.Execute];
 
-          const executeTransaction = await lazorProgram.executeTransactionWithAuth({
+          const executeTransaction = await lazorProgram.executeTxn({
             payer: feePayer,
             smartWallet: new anchor.web3.PublicKey(data.smartWallet),
             passkeySignature: {
-              passkeyPubkey: data.passkeyPubkey,
+              passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
               signature64: browserResult.signature,
               clientDataJsonRaw64: browserResult.clientDataJsonBase64,
               authenticatorDataRaw64: browserResult.authenticatorDataBase64,
             },
             policyInstruction,
             cpiInstruction,
+            timestamp,
+            credentialHash: asCredentialHash(
+              Array.from(
+                new Uint8Array(
+                  sha256.arrayBuffer(Buffer.from(data.credentialId, 'base64'))
+                )
+              )
+            ),
           });
-          if (true) {
-            const commitCpiTx = await lazorProgram.createTransactionSessionWithAuth({
-              payer: feePayer,
-              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-              passkeySignature: {
-                passkeyPubkey: data.passkeyPubkey,
-                signature64: browserResult.signature,
-                clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-                authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-              },
-              policyInstruction,
-              expiresAt: Math.floor(Date.now() / 1000) + 30,
-            });
-
-            const executeCommitedTx = await lazorProgram.executeSessionTransaction({
-              payer: feePayer,
-              smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-              cpiInstruction,
-            });
-
-            return [commitCpiTx, executeCommitedTx];
-          } else {
-            return [executeTransaction];
-          }
-        }
-        case SmartWalletAction.InvokePolicy: {
-          const { policyInstruction, newWalletDevice } =
-            action.args as ArgsByAction[SmartWalletAction.InvokePolicy];
-
-          const callRuleTx = await lazorProgram.invokePolicyWithAuth({
-            payer: feePayer,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeySignature: {
-              passkeyPubkey: data.passkeyPubkey,
-              signature64: browserResult.signature,
-              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            },
-            policyInstruction,
-            newWalletDevice,
-          });
-          return [callRuleTx];
-        }
-        case SmartWalletAction.UpdatePolicy: {
-          const { destroyPolicyIns, initPolicyIns, newWalletDevice } =
-            action.args as ArgsByAction[SmartWalletAction.UpdatePolicy];
-
-          const changeRuleTx = await lazorProgram.updatePolicyWithAuth({
-            payer: feePayer,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeySignature: {
-              passkeyPubkey: data.passkeyPubkey,
-              signature64: browserResult.signature,
-              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            },
-            destroyPolicyInstruction: destroyPolicyIns,
-            initPolicyInstruction: initPolicyIns,
-            newWalletDevice,
-          });
-
-          return [changeRuleTx];
+          return [executeTransaction as anchor.web3.VersionedTransaction];
         }
         default:
           throw Error('Execute wallet is error');

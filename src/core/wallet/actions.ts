@@ -132,6 +132,13 @@ export const createWalletActions = (
     _options: SignOptions
   ): Promise<Array<anchor.web3.VersionedTransaction>> => {
     setLoading(true);
+    const credentialHash = asCredentialHash(
+      Array.from(
+        new Uint8Array(
+          sha256.arrayBuffer(Buffer.from(data.credentialId, 'base64'))
+        )
+      )
+    );
     try {
       switch (action.type) {
         case SmartWalletAction.Execute: {
@@ -150,15 +157,29 @@ export const createWalletActions = (
             policyInstruction,
             cpiInstruction,
             timestamp,
-            credentialHash: asCredentialHash(
-              Array.from(
-                new Uint8Array(
-                  sha256.arrayBuffer(Buffer.from(data.credentialId, 'base64'))
-                )
-              )
-            ),
+            credentialHash,
           });
           return [executeTransaction as anchor.web3.VersionedTransaction];
+        }
+        case SmartWalletAction.CreateChunk: {
+          const { policyInstruction, cpiInstructions } =
+            action.args as ArgsByAction[SmartWalletAction.CreateChunk];
+
+          const createChunkTransaction = await lazorProgram.createChunkTxn({
+            payer: feePayer,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            passkeySignature: {
+              passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
+              signature64: browserResult.signature,
+              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+            },
+            policyInstruction,
+            cpiInstructions,
+            timestamp,
+            credentialHash,
+          });
+          return [createChunkTransaction as anchor.web3.VersionedTransaction];
         }
         default:
           throw Error('Execute wallet is error');

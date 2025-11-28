@@ -20,9 +20,7 @@ class Logger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const envDebug =
       (typeof process !== 'undefined' && (process as any).env?.LAZORKIT_DEBUG) === 'true';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rnDev = typeof __DEV__ !== 'undefined' && (__DEV__ as any) === true;
-    this.isDebugMode = envDebug || rnDev || false;
+    this.isDebugMode = envDebug || false;
   }
 
   getDebugMode() {

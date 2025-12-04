@@ -83,7 +83,7 @@ export type ArgsByAction = {
     cpiSigners?: readonly anchor.web3.PublicKey[];
   };
   [SmartWalletAction.CreateChunk]: {
-    policyInstruction: anchor.web3.TransactionInstruction;
+    policyInstruction: anchor.web3.TransactionInstruction | null;
     cpiInstructions: readonly anchor.web3.TransactionInstruction[];
     expiresAt: number;
     cpiSigners?: readonly anchor.web3.PublicKey[];

@@ -933,7 +933,7 @@ export class LazorkitClient {
     timestamp: BN;
   }): Promise<Buffer> {
     let message: Buffer;
-    const { action, smartWallet, passkeyPublicKey, timestamp } = params;
+    const { action, smartWallet, passkeyPublicKey, credentialHash, timestamp } = params;
 
     switch (action.type) {
       case types.SmartWalletAction.Execute: {
@@ -972,15 +972,37 @@ export class LazorkitClient {
           action.args as types.ArgsByAction[types.SmartWalletAction.CreateChunk];
 
         const smartWalletConfig = await this.getWalletStateData(smartWallet);
-
-        message = buildCreateChunkMessage(
-          smartWallet,
-          smartWalletConfig.lastNonce,
-          timestamp,
-          policyInstruction,
-          cpiInstructions,
-          [...(cpiSigners ?? []), params.payer]
-        );
+        if (!policyInstruction) {
+          const policySigner = this.getWalletDevicePubkey(
+            smartWallet,
+            credentialHash
+          )
+          const defaultPolicyInstruction = await this.defaultPolicyProgram.buildCheckPolicyIx({
+            walletId: smartWalletConfig.walletId,
+            passkeyPublicKey: passkeyPublicKey,
+            policySigner,
+            smartWallet,
+            credentialHash: credentialHash,
+            policyData: smartWalletConfig.policyData,
+          });
+          message = buildCreateChunkMessage(
+            smartWallet,
+            smartWalletConfig.lastNonce,
+            timestamp,
+            defaultPolicyInstruction,
+            cpiInstructions,
+            [...(cpiSigners ?? []), params.payer]
+          );
+        } else {
+          message = buildCreateChunkMessage(
+            smartWallet,
+            smartWalletConfig.lastNonce,
+            timestamp,
+            policyInstruction,
+            cpiInstructions,
+            [...(cpiSigners ?? []), params.payer]
+          );
+        }
         break;
       }
       default:

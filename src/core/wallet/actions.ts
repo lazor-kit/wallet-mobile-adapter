@@ -179,7 +179,19 @@ export const createWalletActions = (
             timestamp,
             credentialHash,
           });
-          return [createChunkTransaction as anchor.web3.VersionedTransaction];
+
+          await signAndSendTxn({
+            base64EncodedTransaction: createChunkTransaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString('base64'),
+            relayerUrl: config.paymasterUrl,
+          });
+
+          const executeChunkTransaction = await lazorProgram.executeChunkTxn({
+            payer: feePayer,
+            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+            cpiInstructions,
+          });
+
+          return [executeChunkTransaction as anchor.web3.VersionedTransaction];
         }
         default:
           throw Error('Execute wallet is error');

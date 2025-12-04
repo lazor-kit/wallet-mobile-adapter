@@ -9,7 +9,6 @@ import { logger } from '../core/logger';
 import { LazorKitProviderProps } from '../types';
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
-import { Text } from 'react-native';
 import { DEFAULTS } from '../config';
 
 global.Buffer = Buffer;
@@ -69,9 +68,9 @@ export const LazorKitProvider = ({
   }, [connection, ipfsUrl, paymasterUrl, rpcUrl, isDebug, setConnection, setConfig]);
 
   try {
-    return <>{typeof children === 'string' ? <Text>{children}</Text> : children}</>;
+    return <>{typeof children === 'string' ? <span>{children}</span> : children}</>;
   } catch (error) {
     logger.error('LazorKitProvider render error:', error);
-    return <Text>LazorKit Provider Error</Text>;
+    return <span>LazorKit Provider Error</span>;
   }
 };

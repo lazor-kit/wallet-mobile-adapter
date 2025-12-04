@@ -6,7 +6,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { useWalletStore } from './store';
 import { ConnectOptions, DisconnectOptions, LazorWalletHook, SignOptions } from '../types';
 import { logger } from '../core/logger';
-import { SmartWalletActionArgs } from '../contract-integration';
+import { SmartWalletActionArgs } from '../contract';
 
 export function useLazorWallet(): LazorWalletHook {
   const {

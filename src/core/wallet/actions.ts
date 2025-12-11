@@ -106,8 +106,15 @@ export const createWalletActions = (
         throw new Error('Smart wallet or wallet device is undefined after processing.');
       }
 
+      // If passkeyPubkey was missing (e.g. from redirect), update it from on-chain state
+      const initialPasskeyPubkey = data.passkeyPubkey;
+      const finalPasskeyPubkey = initialPasskeyPubkey.length === 0 && walletState.passkeyPubkey
+        ? Array.from(walletState.passkeyPubkey)
+        : initialPasskeyPubkey;
+
       return {
         ...data,
+        passkeyPubkey: finalPasskeyPubkey,
         smartWallet: smartWallet.toString(),
         walletDevice: walletDevice.toString(),
       };

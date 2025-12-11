@@ -18,7 +18,7 @@ import { Buffer } from 'buffer';
 export const handleAuthRedirect = (url: string): WalletInfo | null => {
   try {
     const parsed = new URL(url);
-
+    let passkeyPubkey: number[];
     // Basic validation
     if (parsed.searchParams.get('success') !== 'true') {
       logger.error('Auth redirect failed: success parameter is not true', { url });
@@ -29,13 +29,12 @@ export const handleAuthRedirect = (url: string): WalletInfo | null => {
       return null;
     }
 
-    const passkeyPubkey = Array.from(
-      Buffer.from(parsed.searchParams.get('publicKey') || '', 'base64')
-    );
-
-    if (passkeyPubkey.length === 0) {
-      logger.error('Auth redirect failed: empty or invalid publicKey', { url });
-      return null;
+    if (!parsed.searchParams.get('publicKey')) {
+      passkeyPubkey = []
+    } else {
+      passkeyPubkey = Array.from(
+        Buffer.from(parsed.searchParams.get('publicKey') || '', 'base64')
+      );
     }
 
     return {

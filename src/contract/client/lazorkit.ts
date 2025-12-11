@@ -405,6 +405,7 @@ export class LazorkitClient {
         smartWallet: walletDevice.smartWallet,
         walletState: this.getWalletStatePubkey(walletDevice.smartWallet),
         walletDevice: account.pubkey,
+        passkeyPubkey: walletDevice.passkeyPubkey,
       };
     }
   }

@@ -7,7 +7,7 @@ import { SmartWalletActionArgs } from './contract';
  */
 export interface WalletInfo {
   readonly credentialId: string;
-  readonly passkeyPubkey: number[];
+  passkeyPubkey: number[];
   readonly expo: string;
   readonly platform: string;
   readonly smartWallet: string;

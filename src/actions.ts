@@ -162,11 +162,19 @@ export const signAndExecuteTransaction = async (
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
+    const latestBlockhash = await connection.getLatestBlockhash();
+    const messageV0 = new anchor.web3.TransactionMessage({
+      payerKey: feePayer, // PublicKey
+      recentBlockhash: latestBlockhash.blockhash,
+      instructions,
+    }).compileToV0Message();
 
+    const versionedTx = new anchor.web3.VersionedTransaction(messageV0);
+    const base64Tx = Buffer.from(versionedTx.serialize()).toString("base64");
     const redirectUrl = options.redirectUrl;
     const signUrl = `${config.ipfsUrl}/${API_ENDPOINTS.SIGN}&message=${encodeURIComponent(
       encodedChallenge
-    )}&redirect_url=${encodeURIComponent(redirectUrl)}`;
+    )}&credentialId=${encodeURIComponent(wallet.credentialId)}&transaction=${encodeURIComponent(base64Tx)}&redirect_url=${encodeURIComponent(redirectUrl)}`;
 
     await openSignBrowser(
       signUrl,

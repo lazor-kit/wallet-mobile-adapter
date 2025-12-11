@@ -74,7 +74,9 @@ export const useWalletStore = create<WalletStateClient>()(
       wallet: null,
       config: {
         ipfsUrl: DEFAULTS.IPFS_URL,
-        paymasterUrl: DEFAULTS.PAYMASTER_URL,
+        configPaymaster: {
+          paymasterUrl: DEFAULTS.PAYMASTER_URL,
+        },
         rpcUrl: DEFAULTS.RPC_ENDPOINT,
       },
       connection: new anchor.web3.Connection(DEFAULTS.RPC_ENDPOINT!, DEFAULT_COMMITMENT),

@@ -16,7 +16,10 @@ export interface WalletInfo {
 
 export interface WalletConfig {
   readonly ipfsUrl: string;
-  readonly paymasterUrl: string;
+  readonly configPaymaster: {
+    readonly paymasterUrl: string;
+    readonly apiKey?: string;
+  };
   readonly rpcUrl?: string;
 }
 
@@ -26,7 +29,10 @@ export interface WalletConfig {
 export interface LazorKitProviderProps {
   readonly rpcUrl?: string;
   readonly ipfsUrl?: string;
-  readonly paymasterUrl?: string;
+  readonly configPaymaster?: {
+    readonly paymasterUrl: string;
+    readonly apiKey?: string;
+  };
   readonly isDebug?: boolean;
   readonly children:
   | React.JSX.Element

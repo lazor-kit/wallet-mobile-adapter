@@ -19,7 +19,7 @@ import {
   WalletConnectionError,
   SigningError,
 } from './types';
-import { asCredentialHash, LazorkitClient, SmartWalletActionArgs, getBlockchainTimestamp } from './contract';
+import { asCredentialHash, LazorkitClient, getBlockchainTimestamp, SmartWalletAction } from './contract';
 import { getFeePayer } from './core/paymaster';
 import { sha256 } from 'js-sha256';
 
@@ -95,17 +95,17 @@ export const disconnectAction = async (set: (state: Partial<WalletStateClient>) 
 };
 
 /**
- * Signs a message through smart wallet
+ * Sign and execute transaction via Paymaster
  *
  * @param get - Zustand state getter function
  * @param set - Zustand state setter function
  * @param txnIns - Transaction instruction to execute
  * @param options - Signing options with callbacks
  */
-export const signMessageAction = async (
+export const signAndExecuteTransaction = async (
   get: () => WalletStateClient,
   set: (state: Partial<WalletStateClient>) => void,
-  action: SmartWalletActionArgs,
+  instructions: anchor.web3.TransactionInstruction[],
   options: SignOptions
 ) => {
   const { isSigning, connection, wallet, config } = get();
@@ -132,12 +132,18 @@ export const signMessageAction = async (
   try {
     const lazorProgram = new LazorkitClient(connection);
 
-    const feePayer = await getFeePayer(config.paymasterUrl);
+    const feePayer = await getFeePayer(config.configPaymaster.paymasterUrl, config.configPaymaster.apiKey);
 
     const timestamp = await getBlockchainTimestamp(connection);
 
     const message = await lazorProgram.buildAuthorizationMessage({
-      action,
+      action: {
+        type: SmartWalletAction.CreateChunk,
+        args: {
+          policyInstruction: null,
+          cpiInstructions: instructions,
+        }
+      },
       payer: feePayer,
       smartWallet: new anchor.web3.PublicKey(wallet.smartWallet),
       passkeyPublicKey: wallet.passkeyPubkey,
@@ -178,7 +184,13 @@ export const signMessageAction = async (
             wallet,
             feePayer,
             timestamp,
-            action,
+            {
+              type: SmartWalletAction.CreateChunk,
+              args: {
+                policyInstruction: null,
+                cpiInstructions: instructions,
+              }
+            },
             browserResult,
             options
           );

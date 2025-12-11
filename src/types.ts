@@ -16,7 +16,10 @@ export interface WalletInfo {
 
 export interface WalletConfig {
   readonly ipfsUrl: string;
-  readonly paymasterUrl: string;
+  readonly configPaymaster: {
+    readonly paymasterUrl: string;
+    readonly apiKey?: string;
+  };
   readonly rpcUrl?: string;
 }
 
@@ -26,7 +29,10 @@ export interface WalletConfig {
 export interface LazorKitProviderProps {
   readonly rpcUrl?: string;
   readonly ipfsUrl?: string;
-  readonly paymasterUrl?: string;
+  readonly configPaymaster?: {
+    readonly paymasterUrl: string;
+    readonly apiKey?: string;
+  };
   readonly isDebug?: boolean;
   readonly children:
   | React.JSX.Element
@@ -95,7 +101,7 @@ export interface WalletStateClient {
   // Actions
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: () => Promise<void>;
-  signMessage: (action: SmartWalletActionArgs, options: SignOptions) => Promise<void>;
+  signAndExecuteTransaction: (instructions: anchor.web3.TransactionInstruction[], options: SignOptions) => Promise<void>;
 }
 
 /**
@@ -112,7 +118,7 @@ export interface LazorWalletHook {
   connection: anchor.web3.Connection;
   connect: (options: ConnectOptions) => Promise<WalletInfo>;
   disconnect: (options?: DisconnectOptions) => Promise<void>;
-  signMessage: (action: SmartWalletActionArgs, options: SignOptions) => Promise<string>;
+  signAndSendTransaction: (instructions: anchor.web3.TransactionInstruction[], options: SignOptions) => Promise<string>;
 }
 
 /**
@@ -127,7 +133,7 @@ export interface WalletActions {
     action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     signOptions: SignOptions
-  ) => Promise<Array<anchor.web3.VersionedTransaction>>;
+  ) => Promise<string>;
 }
 
 /**

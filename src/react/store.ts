@@ -11,7 +11,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { WalletStateClient, WalletInfo, WalletConfig, ConnectOptions, SignOptions } from '../types';
 import { DEFAULT_COMMITMENT, DEFAULTS, STORAGE_KEYS } from '../config';
 import { logger } from '../core/logger';
-import { connectAction, disconnectAction, signMessageAction } from '../actions';
+import { connectAction, disconnectAction, signAndExecuteTransaction } from '../actions';
 import { SmartWalletActionArgs } from '../contract';
 
 // AsyncStorage dynamic import remains unchanged
@@ -74,7 +74,9 @@ export const useWalletStore = create<WalletStateClient>()(
       wallet: null,
       config: {
         ipfsUrl: DEFAULTS.IPFS_URL,
-        paymasterUrl: DEFAULTS.PAYMASTER_URL,
+        configPaymaster: {
+          paymasterUrl: DEFAULTS.PAYMASTER_URL,
+        },
         rpcUrl: DEFAULTS.RPC_ENDPOINT,
       },
       connection: new anchor.web3.Connection(DEFAULTS.RPC_ENDPOINT!, DEFAULT_COMMITMENT),
@@ -135,8 +137,8 @@ export const useWalletStore = create<WalletStateClient>()(
 
       connect: (options: ConnectOptions) => connectAction(get, set, options),
       disconnect: () => disconnectAction(set),
-      signMessage: (action: SmartWalletActionArgs, options: SignOptions) =>
-        signMessageAction(get, set, action, options),
+      signAndExecuteTransaction: (instructions: anchor.web3.TransactionInstruction[], options: SignOptions) =>
+        signAndExecuteTransaction(get, set, instructions, options),
     }),
     {
       name: STORAGE_KEYS.WALLET,

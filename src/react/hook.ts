@@ -18,7 +18,7 @@ export function useLazorWallet(): LazorWalletHook {
     connect,
     disconnect,
     connection,
-    signMessage,
+    signAndExecuteTransaction,
   } = useWalletStore();
 
   const handleConnect = async (connectOptions: ConnectOptions) => {
@@ -46,13 +46,13 @@ export function useLazorWallet(): LazorWalletHook {
     }
   };
 
-  const handleSignMessage = (
-    action: SmartWalletActionArgs,
+  const handleSignAndExecuteTransaction = (
+    instructions: anchor.web3.TransactionInstruction[],
     signOptions: SignOptions
   ): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       try {
-        signMessage(action, {
+        signAndExecuteTransaction(instructions, {
           redirectUrl: signOptions.redirectUrl,
           onSuccess: (signature) => {
             signOptions?.onSuccess?.(signature);
@@ -88,6 +88,6 @@ export function useLazorWallet(): LazorWalletHook {
     connection,
     connect: handleConnect,
     disconnect: handleDisconnect,
-    signMessage: handleSignMessage,
+    signAndSendTransaction: handleSignAndExecuteTransaction,
   };
 }

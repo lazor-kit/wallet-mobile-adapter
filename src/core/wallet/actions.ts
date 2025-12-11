@@ -16,7 +16,7 @@ import {
   asCredentialHash,
   asPasskeyPublicKey
 } from '../../contract';
-import { getFeePayer, signAndSendTxn } from '../paymaster';
+import { getFeePayer, signAndExecuteTransaction } from '../paymaster';
 import { logger } from '../logger';
 import { sha256 } from 'js-sha256';
 
@@ -27,7 +27,7 @@ import { sha256 } from 'js-sha256';
 export const createWalletActions = (
   connection: anchor.web3.Connection,
   setLoading: (isLoading: boolean) => void,
-  config: { paymasterUrl: string }
+  config: { configPaymaster: { paymasterUrl: string, apiKey?: string } }
 ): WalletActions => {
   const lazorProgram = new LazorkitClient(connection);
 
@@ -36,7 +36,6 @@ export const createWalletActions = (
    */
   const saveWallet = async (data: WalletInfo): Promise<WalletInfo> => {
     setLoading(true);
-
     try {
       // Compute credential hash
       const credentialHash = asCredentialHash(
@@ -55,8 +54,7 @@ export const createWalletActions = (
 
       if (!walletState) {
         // === Create new smart wallet on chain ===
-
-        const feePayer = await getFeePayer(config.paymasterUrl);
+        const feePayer = await getFeePayer(config.configPaymaster.paymasterUrl, config.configPaymaster.apiKey);
 
         const result = await lazorProgram.createSmartWalletTxn({
           passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
@@ -68,20 +66,22 @@ export const createWalletActions = (
           .serialize({ verifySignatures: false, requireAllSignatures: false })
           .toString('base64');
 
-        const { result: sendResult, error: sendError } = await signAndSendTxn({
-          base64EncodedTransaction: serialized,
-          relayerUrl: config.paymasterUrl,
-        });
+        const signature = await signAndExecuteTransaction(
+          serialized,
+          config.configPaymaster.paymasterUrl,
+          feePayer.toBase58(),
+          config.configPaymaster.apiKey,
+        )
 
-        if (sendError) {
-          logger.error('Create wallet relayer error:', sendError, {
-            paymasterUrl: config.paymasterUrl,
+        if (!signature) {
+          logger.error('Create wallet relayer error:', {
+            paymasterUrl: config.configPaymaster.paymasterUrl,
           });
-          throw new Error(`Create wallet relayer error: ${JSON.stringify(sendError)}`);
+          throw new Error(`Create wallet relayer error`);
         }
 
         await lazorProgram.connection.confirmTransaction(
-          String(sendResult.signature),
+          String(signature),
           'confirmed'
         );
 
@@ -91,7 +91,7 @@ export const createWalletActions = (
           logger.error(
             'Failed to create smart wallet on chain after transaction confirmed',
             {
-              signature: sendResult.signature,
+              signature,
               passkeyPubkey: data.passkeyPubkey,
             }
           );
@@ -130,7 +130,7 @@ export const createWalletActions = (
     action: SmartWalletActionArgs,
     browserResult: BrowserResult,
     _options: SignOptions
-  ): Promise<Array<anchor.web3.VersionedTransaction>> => {
+  ): Promise<string> => {
     setLoading(true);
     const credentialHash = asCredentialHash(
       Array.from(
@@ -140,62 +140,50 @@ export const createWalletActions = (
       )
     );
     try {
-      switch (action.type) {
-        case SmartWalletAction.Execute: {
-          const { policyInstruction, cpiInstruction } =
-            action.args as ArgsByAction[SmartWalletAction.Execute];
+      const { policyInstruction, cpiInstructions } =
+        action.args as ArgsByAction[SmartWalletAction.CreateChunk];
 
-          const executeTransaction = await lazorProgram.executeTxn({
-            payer: feePayer,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeySignature: {
-              passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
-              signature64: browserResult.signature,
-              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            },
-            policyInstruction,
-            cpiInstruction,
-            timestamp,
-            credentialHash,
-          });
-          return [executeTransaction as anchor.web3.VersionedTransaction];
-        }
-        case SmartWalletAction.CreateChunk: {
-          const { policyInstruction, cpiInstructions } =
-            action.args as ArgsByAction[SmartWalletAction.CreateChunk];
+      const createChunkTransaction = await lazorProgram.createChunkTxn({
+        payer: feePayer,
+        smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+        passkeySignature: {
+          passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
+          signature64: browserResult.signature,
+          clientDataJsonRaw64: browserResult.clientDataJsonBase64,
+          authenticatorDataRaw64: browserResult.authenticatorDataBase64,
+        },
+        policyInstruction,
+        cpiInstructions,
+        timestamp,
+        credentialHash,
+      });
 
-          const createChunkTransaction = await lazorProgram.createChunkTxn({
-            payer: feePayer,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            passkeySignature: {
-              passkeyPublicKey: asPasskeyPublicKey(data.passkeyPubkey),
-              signature64: browserResult.signature,
-              clientDataJsonRaw64: browserResult.clientDataJsonBase64,
-              authenticatorDataRaw64: browserResult.authenticatorDataBase64,
-            },
-            policyInstruction,
-            cpiInstructions,
-            timestamp,
-            credentialHash,
-          });
-
-          await signAndSendTxn({
-            base64EncodedTransaction: createChunkTransaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString('base64'),
-            relayerUrl: config.paymasterUrl,
-          });
-
-          const executeChunkTransaction = await lazorProgram.executeChunkTxn({
-            payer: feePayer,
-            smartWallet: new anchor.web3.PublicKey(data.smartWallet),
-            cpiInstructions,
-          });
-
-          return [executeChunkTransaction as anchor.web3.VersionedTransaction];
-        }
-        default:
-          throw Error('Execute wallet is error');
-      }
+      const signature = await signAndExecuteTransaction(
+        createChunkTransaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString('base64'),
+        config.configPaymaster.paymasterUrl,
+        feePayer.toBase58(),
+        config.configPaymaster.apiKey
+      );
+      await lazorProgram.connection.confirmTransaction(
+        String(signature),
+        'confirmed'
+      );
+      const executeChunkTransaction = await lazorProgram.executeChunkTxn({
+        payer: feePayer,
+        smartWallet: new anchor.web3.PublicKey(data.smartWallet),
+        cpiInstructions,
+      });
+      const signatureExecuteChunk = await signAndExecuteTransaction(
+        executeChunkTransaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString('base64'),
+        config.configPaymaster.paymasterUrl,
+        feePayer.toBase58(),
+        config.configPaymaster.apiKey
+      );
+      await lazorProgram.connection.confirmTransaction(
+        String(signatureExecuteChunk),
+        'confirmed'
+      );
+      return signatureExecuteChunk;
     } catch (error: unknown) {
       logger.error('ExecuteWallet action failed:', error, {
         smartWallet: data.smartWallet,
@@ -206,7 +194,6 @@ export const createWalletActions = (
       setLoading(false);
     }
   };
-
   return {
     saveWallet,
     executeWallet,

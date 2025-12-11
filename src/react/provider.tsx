@@ -60,6 +60,7 @@ export const LazorKitProvider = ({
         ipfsUrl,
         configPaymaster: {
           paymasterUrl: configPaymaster.paymasterUrl,
+          apiKey: configPaymaster.apiKey,
         },
         rpcUrl
       });

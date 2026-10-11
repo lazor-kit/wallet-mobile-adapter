@@ -1,3 +1,20 @@
+> [!CAUTION]
+> **This repository is superseded and no longer maintained.**
+> `@lazorkit/wallet-mobile-adapter` is now developed in
+> [lazor-kit/lazor-kit](https://github.com/lazor-kit/lazor-kit/tree/main/packages/react-native)
+> (`packages/react-native`). npm versions **2.0.0 and later** are published
+> from there.
+>
+> **Do not use the versions built from this repository.** Versions 1.3.38 to
+> 1.5.1 target the program `Gsuz7YcA5sbMGVRXT3xSYhJBessW4xFC4xYsihNCqMFh`, an
+> Anchor program that was deployed to mainnet for testing from November 2025.
+> It was not audited, and it was closed on mainnet on 2026-01-06. Wallets
+> created on it can no longer be operated. Earlier 1.x versions target earlier
+> development programs. The 2.0.0-beta pre-releases were superseded by 2.0.0.
+>
+> Install the current release instead:
+> `npm install @lazorkit/wallet-mobile-adapter@latest`.
+
 # LazorKit React Native SDK
 
 LazorKit allows you to build **Passkey-native** mobile applications.
